@@ -1,0 +1,488 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+
+type Tutorial = CollectionEntry<'tutorials'>;
+
+export async function getStaticPaths() {
+  const entries = (await getCollection('tutorials', ({ data }) => !data.draft)).sort(
+    (a, b) => a.data.date.valueOf() - b.data.date.valueOf(),
+  );
+  return entries.map((entry, i) => ({
+    params: { slug: entry.id },
+    render: { default: entry },
+    props: {
+      entry,
+      prev: entries[i - 1] ?? null,
+      next: entries[i + 1] ?? null,
+    },
+  }));
+}
+
+interface Props {
+  entry: Tutorial;
+  prev: Tutorial | null;
+  next: Tutorial | null;
+}
+
+const { entry, prev, next } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+
+function fmtDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+---
+
+<BaseLayout title={`${entry.data.title} · Prism AI 棱镜`} description={entry.data.description}>
+  <div class="progress-track" aria-hidden="true">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <article class="article">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href={base}>首页</a>
+      <span>/</span>
+      <a href={base + 'tutorials'}>教程</a>
+      <span>/</span>
+      <span class="current">{entry.data.category}</span>
+    </nav>
+
+    <header class="article-head">
+      <div class="article-meta">
+        <span class="badge">{entry.data.category}</span>
+        <span class:list={['difficulty', `diff-${entry.data.difficulty}`]}>{entry.data.difficulty}</span>
+      </div>
+      <h1>{entry.data.title}</h1>
+      <p class="article-desc">{entry.data.description}</p>
+      <div class="article-info">
+        <time datetime={fmtDate(entry.data.date)}>发布于 {fmtDate(entry.data.date)}</time>
+        {
+          entry.data.updated && (
+            <time>· 更新于 {fmtDate(entry.data.updated)}</time>
+          )
+        }
+      </div>
+    </header>
+
+    <div class="article-layout">
+      <div class="article-content" id="article-content">
+        <Content />
+      </div>
+
+      <aside class="toc-wrap" aria-label="文章目录">
+        <div class="toc-inner glass-panel">
+          <h2>目录</h2>
+          <nav id="toc"></nav>
+        </div>
+      </aside>
+    </div>
+
+    <nav class="post-nav" aria-label="文章导航">
+      {
+        prev && (
+          <a class="post-nav-card glass-card flow-border" href={`${base}tutorials/${prev.id}`} rel="prev">
+            <span class="nav-direction">上一篇</span>
+            <span class="nav-title">{prev.data.title}</span>
+          </a>
+        )
+      }
+      {
+        next && (
+          <a class="post-nav-card glass-card flow-border next" href={`${base}tutorials/${next.id}`} rel="next">
+            <span class="nav-direction">下一篇</span>
+            <span class="nav-title">{next.data.title}</span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+
+  <button id="back-to-top" class="back-to-top" type="button" aria-label="返回顶部" hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 19V5M5 12l7-7 7 7" />
+    </svg>
+  </button>
+</BaseLayout>
+
+<style>
+  .progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 60;
+    background: rgba(56, 189, 248, 0.12);
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    transition: width 0.1s linear;
+  }
+
+  .article {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-ink-500);
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-ice-700);
+  }
+
+  .breadcrumb .current {
+    color: var(--color-ink-700);
+  }
+
+  .article-head {
+    max-width: 48rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .article-meta {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .difficulty {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .diff-入门 { color: #0369a1; background: rgba(56, 189, 248, 0.16); }
+  .diff-进阶 { color: #b45309; background: rgba(251, 191, 36, 0.18); }
+  .diff-实战 { color: #be123c; background: rgba(244, 63, 94, 0.15); }
+
+  .article-head h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1.3;
+    margin: 0 0 0.8rem;
+  }
+
+  .article-desc {
+    color: var(--color-ink-500);
+    font-size: 1.02rem;
+    line-height: 1.7;
+    margin: 0 0 1rem;
+  }
+
+  .article-info {
+    font-size: 0.85rem;
+    color: var(--color-ink-400);
+    font-family: var(--font-display);
+  }
+
+  .article-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .toc-wrap {
+    position: sticky;
+    top: 90px;
+  }
+
+  .toc-inner {
+    padding: 1.2rem 1.3rem;
+  }
+
+  .toc-inner h2 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    margin: 0 0 0.8rem;
+  }
+
+  #toc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  #toc a {
+    font-size: 0.84rem;
+    color: var(--color-ink-500);
+    line-height: 1.5;
+    border-left: 2px solid rgba(56, 189, 248, 0.2);
+    padding-left: 0.7rem;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  #toc a.level-3 {
+    padding-left: 1.4rem;
+    font-size: 0.8rem;
+  }
+
+  #toc a.active {
+    color: var(--color-ice-700);
+    border-left-color: var(--color-ice-600);
+    font-weight: 600;
+  }
+
+  /* 正文排版 */
+  .article-content {
+    max-width: 48rem;
+    font-size: 1rem;
+    line-height: 1.9;
+    color: var(--color-ink-700);
+  }
+
+  .article-content h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--color-ink-900);
+    margin: 2.4rem 0 1rem;
+    padding-top: 0.5rem;
+    scroll-margin-top: 80px;
+  }
+
+  .article-content h3 {
+    font-size: 1.18rem;
+    color: var(--color-ink-900);
+    margin: 1.8rem 0 0.8rem;
+    scroll-margin-top: 80px;
+  }
+
+  .article-content p {
+    margin: 0 0 1.1rem;
+  }
+
+  .article-content ul,
+  .article-content ol {
+    margin: 0 0 1.1rem;
+    padding-left: 1.5rem;
+  }
+
+  .article-content li {
+    margin-bottom: 0.5rem;
+  }
+
+  .article-content blockquote {
+    margin: 1.4rem 0;
+    padding: 0.8rem 1.2rem;
+    border-left: 3px solid var(--color-ice-500);
+    background: rgba(56, 189, 248, 0.08);
+    border-radius: 0 0.8rem 0.8rem 0;
+    color: var(--color-ink-700);
+  }
+
+  .article-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.4rem 0;
+    font-size: 0.9rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .article-content th,
+  .article-content td {
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+  }
+
+  .article-content th {
+    background: rgba(56, 189, 248, 0.12);
+    font-weight: 600;
+  }
+
+  .article-content code {
+    font-family: var(--font-display);
+    font-size: 0.86em;
+    background: rgba(56, 189, 248, 0.14);
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    color: #0369a1;
+  }
+
+  .article-content pre {
+    position: relative;
+    margin: 1.4rem 0;
+    padding: 1.1rem 1.2rem;
+    border-radius: 1rem;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .article-content pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .code-copy {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.85;
+  }
+
+  .code-copy:hover {
+    opacity: 1;
+  }
+
+  .post-nav {
+    margin-top: 3.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .post-nav-card {
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .post-nav-card.next {
+    text-align: right;
+  }
+
+  .nav-direction {
+    font-size: 0.78rem;
+    color: var(--color-ink-400);
+  }
+
+  .nav-title {
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+
+  .back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    color: var(--color-ice-700);
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
+    z-index: 45;
+  }
+
+  @media (max-width: 980px) {
+    .article-layout {
+      grid-template-columns: 1fr;
+    }
+    .toc-wrap {
+      position: static;
+      order: -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .post-nav {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // 阅读进度
+  const progressBar = document.getElementById('progress-bar') as HTMLElement;
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = docHeight > 0 ? scrollTop / docHeight : 0;
+    progressBar.style.width = `${Math.min(100, ratio * 100)}%`;
+  }
+
+  // 生成 TOC
+  const content = document.getElementById('article-content') as HTMLElement;
+  const toc = document.getElementById('toc') as HTMLElement;
+  const headings = Array.from(content.querySelectorAll('h2, h3'));
+  const headingInfos: { el: Element; link: HTMLAnchorElement }[] = [];
+
+  headings.forEach((h, i) => {
+    if (!h.id) h.id = `section-${i}`;
+    const link = document.createElement('a');
+    link.href = `#${h.id}`;
+    link.textContent = h.textContent ?? '';
+    link.classList.add(h.tagName === 'H3' ? 'level-3' : 'level-2');
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    toc.appendChild(link);
+    headingInfos.push({ el: h, link });
+  });
+
+  // scroll spy
+  if ('IntersectionObserver' in window && headingInfos.length > 0) {
+    const spy = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const info = headingInfos.find((i) => i.el === entry.target);
+            headingInfos.forEach((i) => i.link.classList.remove('active'));
+            info?.link.classList.add('active');
+          }
+        });
+      },
+      { rootMargin: '-80px 0px -70% 0px' },
+    );
+    headingInfos.forEach((i) => spy.observe(i.el));
+  }
+
+  // 代码块复制按钮
+  content.querySelectorAll('pre').forEach((pre) => {
+    const btn = document.createElement('button');
+    btn.className = 'code-copy';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pre.textContent ?? '');
+        btn.textContent = '已复制 ✓';
+      } catch {
+        btn.textContent = '复制失败';
+      }
+      setTimeout(() => {
+        btn.textContent = '复制';
+      }, 1600);
+    });
+    pre.appendChild(btn);
+  });
+
+  // 返回顶部
+  const backToTop = document.getElementById('back-to-top') as HTMLElement;
+  window.addEventListener('scroll', () => {
+    updateProgress();
+    backToTop.hidden = window.scrollY < 400;
+  }, { passive: true });
+  backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  updateProgress();
+</script>

@@ -1,0 +1,424 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { PROMPT_CATEGORIES, AI_MODELS } from '../../data/categories';
+
+const base = import.meta.env.BASE_URL;
+const entries = (await getCollection('prompts')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+function fmtDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const cards = entries.map((e) => ({
+  id: e.id,
+  title: e.data.title,
+  description: e.data.description,
+  category: e.data.category,
+  tags: e.data.tags,
+  models: e.data.models,
+  featured: e.data.featured,
+  date: fmtDate(e.data.date),
+  body: e.body ?? '',
+}));
+---
+
+<BaseLayout title="提示词库 · Prism AI 棱镜" description="按场景分类的实战 AI 提示词，支持搜索、标签与模型筛选，一键复制即用。">
+  <section class="page">
+    <header class="page-head reveal">
+      <h1>提示词库</h1>
+      <p>按场景分类的实战提示词，筛选后一键复制，直接粘贴给 AI 使用。</p>
+    </header>
+
+    <!-- 筛选栏 -->
+    <div class="filters glass-panel reveal">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.3-4.3" stroke-linecap="round" />
+        </svg>
+        <input id="prompt-search" type="search" placeholder="搜索标题、标签或正文…" aria-label="搜索提示词" />
+      </div>
+
+      <div class="category-row" role="group" aria-label="按分类筛选">
+        <button class="chip active" type="button" data-category="all">全部</button>
+        {
+          PROMPT_CATEGORIES.map((c) => (
+            <button class="chip" type="button" data-category={c}>{c}</button>
+          ))
+        }
+      </div>
+
+      <div class="select-row">
+        <label class="select-label">
+          适配模型
+          <select id="model-select" aria-label="按模型筛选">
+            <option value="all">全部模型</option>
+            {
+              AI_MODELS.map((m) => (
+                <option value={m}>{m}</option>
+              ))
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- 卡片列表 -->
+    <div class="prompt-grid" id="prompt-grid">
+      {
+        cards.map((c) => (
+          <article
+            class="prompt-card glass-card glass-card--hover flow-border reveal"
+            data-category={c.category}
+            data-models={c.models.join(',')}
+            data-search={[c.title, c.description, c.tags.join(' '), c.body].join(' ').toLowerCase()}
+          >
+            <div class="card-top">
+              <div class="card-title-row">
+                <h2>{c.title}</h2>
+                {c.featured && <span class="featured-tag">精选</span>}
+              </div>
+              <p class="card-desc">{c.description}</p>
+              <div class="card-meta">
+                <span class="badge">{c.category}</span>
+                <time>{c.date}</time>
+              </div>
+              <div class="tag-row">
+                {c.tags.map((t) => <span class="mini-tag">#{t}</span>)}
+                {c.models.map((m) => <span class="mini-tag model">{m}</span>)}
+              </div>
+            </div>
+
+            <pre class="prompt-body" hidden>{c.body}</pre>
+
+            <div class="card-actions">
+              <button class="btn btn-ghost btn-sm toggle-body" type="button" aria-expanded="false">
+                查看提示词
+              </button>
+              <button class="btn btn-primary btn-sm copy-btn" type="button" data-copy={c.body}>
+                一键复制
+              </button>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="empty-state" id="empty-state" hidden>
+      <p>没有找到符合条件的提示词，换个关键词或清除筛选试试。</p>
+      <button class="btn btn-ghost" id="reset-filters" type="button">清除全部筛选</button>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--color-ink-500);
+    margin: 0 0 2rem;
+  }
+
+  .filters {
+    padding: 1.3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--color-ink-500);
+  }
+
+  .search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: var(--color-ink-900);
+    outline: none;
+  }
+
+  .category-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .chip {
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-ink-700);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .chip:hover {
+    background: rgba(56, 189, 248, 0.14);
+  }
+
+  .chip.active {
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .select-label {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.88rem;
+    color: var(--color-ink-700);
+  }
+
+  .select-label select {
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--color-ink-900);
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+
+  .prompt-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .card-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .card-title-row h2 {
+    margin: 0;
+    font-size: 1.08rem;
+    line-height: 1.5;
+  }
+
+  .featured-tag {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  }
+
+  .card-desc {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-ink-500);
+    line-height: 1.6;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-meta time {
+    font-size: 0.8rem;
+    color: var(--color-ink-400);
+    font-family: var(--font-display);
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .mini-tag {
+    font-size: 0.75rem;
+    color: var(--color-ink-500);
+  }
+
+  .mini-tag.model {
+    color: var(--color-ice-700);
+    font-weight: 600;
+  }
+
+  .prompt-body {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--color-ink-700);
+    background: rgba(234, 242, 252, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 0.9rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: auto;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1.1rem;
+    font-size: 0.85rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--color-ink-500);
+  }
+
+  .empty-state .btn {
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 900px) {
+    .prompt-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const searchInput = document.getElementById('prompt-search') as HTMLInputElement;
+  const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.prompt-card'));
+  const emptyState = document.getElementById('empty-state') as HTMLElement;
+  const grid = document.getElementById('prompt-grid') as HTMLElement;
+
+  let activeCategory = 'all';
+
+  function syncQuery() {
+    const params = new URLSearchParams(location.search);
+    if (activeCategory !== 'all') params.set('category', activeCategory);
+    else params.delete('category');
+    if (modelSelect.value !== 'all') params.set('model', modelSelect.value);
+    else params.delete('model');
+    if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
+    else params.delete('q');
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+  }
+
+  function applyFilters() {
+    const keyword = searchInput.value.trim().toLowerCase();
+    const model = modelSelect.value;
+    let visibleCount = 0;
+
+    cards.forEach((card) => {
+      const matchCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
+      const matchModel = model === 'all' || (card.dataset.models ?? '').split(',').includes(model);
+      const matchKeyword = !keyword || (card.dataset.search ?? '').includes(keyword);
+      const show = matchCategory && matchModel && matchKeyword;
+      card.style.display = show ? '' : 'none';
+      if (show) visibleCount++;
+    });
+
+    emptyState.hidden = visibleCount !== 0;
+    grid.hidden = visibleCount === 0;
+    syncQuery();
+  }
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      chips.forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeCategory = chip.dataset.category ?? 'all';
+      applyFilters();
+    });
+  });
+
+  searchInput.addEventListener('input', applyFilters);
+  modelSelect.addEventListener('change', applyFilters);
+
+  // 展开/收起
+  cards.forEach((card) => {
+    const toggle = card.querySelector<HTMLButtonElement>('.toggle-body');
+    const body = card.querySelector<HTMLPreElement>('.prompt-body');
+    toggle?.addEventListener('click', () => {
+      const open = body?.hidden === false;
+      if (body) body.hidden = open;
+      toggle.setAttribute('aria-expanded', String(!open));
+      toggle.textContent = open ? '查看提示词' : '收起';
+    });
+
+    const copyBtn = card.querySelector<HTMLButtonElement>('.copy-btn');
+    copyBtn?.addEventListener('click', async () => {
+      const text = copyBtn.dataset.copy ?? '';
+      const original = copyBtn.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = '已复制 ✓';
+      } catch {
+        copyBtn.textContent = '复制失败，请手动选择';
+      }
+      setTimeout(() => {
+        copyBtn.textContent = original;
+      }, 1800);
+    });
+  });
+
+  document.getElementById('reset-filters')?.addEventListener('click', () => {
+    searchInput.value = '';
+    modelSelect.value = 'all';
+    activeCategory = 'all';
+    chips.forEach((c) => c.classList.toggle('active', c.dataset.category === 'all'));
+    applyFilters();
+  });
+
+  // 初始化：读取 URL 状态
+  const initParams = new URLSearchParams(location.search);
+  const initCat = initParams.get('category');
+  const initModel = initParams.get('model');
+  const initQ = initParams.get('q');
+  if (initCat) {
+    const target = chips.find((c) => c.dataset.category === initCat);
+    if (target) {
+      chips.forEach((c) => c.classList.remove('active'));
+      target.classList.add('active');
+      activeCategory = initCat;
+    }
+  }
+  if (initModel) modelSelect.value = initModel;
+  if (initQ) searchInput.value = initQ;
+  applyFilters();
+</script>

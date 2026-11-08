@@ -1,0 +1,336 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CrystalOrb from '../components/three/CrystalOrb.astro';
+import { getCollection } from 'astro:content';
+
+const base = import.meta.env.BASE_URL;
+
+const prompts = await getCollection('prompts');
+const tutorials = await getCollection('tutorials', ({ data }) => !data.draft);
+
+type UpdateItem = {
+  type: string;
+  title: string;
+  description: string;
+  date: Date;
+  category: string;
+  href: string;
+};
+
+const updates: UpdateItem[] = [
+  ...prompts.map((p) => ({
+    type: '提示词',
+    title: p.data.title,
+    description: p.data.description,
+    date: p.data.date,
+    category: p.data.category,
+    href: `${base}prompts`,
+  })),
+  ...tutorials.map((t) => ({
+    type: '教程',
+    title: t.data.title,
+    description: t.data.description,
+    date: t.data.date,
+    category: t.data.category,
+    href: `${base}tutorials/${t.id}`,
+  })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf()).slice(0, 8);
+
+function fmtDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const features = [
+  {
+    title: '提示词库',
+    desc: '按场景分类的实战提示词，标签筛选、一键复制，拿来就能用。',
+    icon: 'M4 5h16M4 12h16M4 19h10',
+  },
+  {
+    title: '系统教程',
+    desc: '从零基础到熟练运用，结构化文章配合代码示例，循序渐进。',
+    icon: 'M12 4l8 4-8 4-8-4 8-4zm-8 9l8 4 8-4',
+  },
+  {
+    title: '每日更新',
+    desc: '开源共建、持续迭代，记录 AI 最新的高效用法与实践。',
+    icon: 'M12 3v9l6 3M21 12a9 9 0 11-9-9',
+  },
+];
+---
+
+<BaseLayout>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-text reveal">
+      <span class="hero-tag">开源 · 每日更新 · AI 学习站</span>
+      <h1 class="hero-title">
+        Prism AI <span class="hero-title-cn">棱镜</span>
+      </h1>
+      <p class="hero-slogan">折射 AI 的每一束光，照见高效学习的路径。</p>
+      <p class="hero-desc">
+        一个教你正确、高效使用 AI 的开源知识库：从即取即用的提示词，到系统完整的教程，让每一次提问都有专业的回答。
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={base + 'prompts'}>探索提示词库</a>
+        <a class="btn btn-ghost" href={base + 'tutorials'}>开始学习教程</a>
+      </div>
+    </div>
+    <div class="hero-orb reveal">
+      <CrystalOrb />
+    </div>
+  </section>
+
+  <!-- 最新更新 -->
+  <section class="section">
+    <div class="section-head reveal">
+      <h2>最新更新</h2>
+      <p>提示词与教程联合时间线，每天都有新内容</p>
+    </div>
+    <ul class="timeline">
+      {
+        updates.map((item) => (
+          <li class="timeline-item glass-card glass-card--hover flow-border reveal">
+            <a href={item.href}>
+              <div class="timeline-meta">
+                <span class:list={['type-badge', item.type === '教程' ? 'is-tutorial' : 'is-prompt']}>{item.type}</span>
+                <time datetime={fmtDate(item.date)}>{fmtDate(item.date)}</time>
+              </div>
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              <span class="timeline-category badge">{item.category}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <!-- 特性 -->
+  <section class="section">
+    <div class="section-head reveal">
+      <h2>这里有什么</h2>
+      <p>功能保障与创新体验，围绕「学会用 AI」这一件事</p>
+    </div>
+    <div class="feature-grid">
+      {
+        features.map((f) => (
+          <article class="feature-card glass-card glass-card--hover flow-border reveal">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d={f.icon} />
+            </svg>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- 开源区块 -->
+  <section class="section">
+    <div class="open-source glass-panel reveal">
+      <div>
+        <h2>开源共建，保持更新</h2>
+        <p>
+          Prism AI 全部内容基于 MIT 协议开放源代码，欢迎在 GitHub 上提交 Issue 与 PR，一起把正确的 AI 用法带给更多人。
+        </p>
+      </div>
+      <a class="btn btn-primary" href="https://github.com/pureedgelk/prism-ai" target="_blank" rel="noopener noreferrer">
+        访问 GitHub 仓库
+      </a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-ice-700);
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    margin-bottom: 1.4rem;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--color-ink-900);
+    margin: 0;
+  }
+
+  .hero-title-cn {
+    background: linear-gradient(120deg, #38bdf8, #0ea5e9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-slogan {
+    margin: 1.1rem 0 0.6rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-ice-700);
+  }
+
+  .hero-desc {
+    color: var(--color-ink-500);
+    line-height: 1.8;
+    max-width: 34rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin: 0 0 0.4rem;
+  }
+
+  .section-head p {
+    margin: 0 0 1.6rem;
+    color: var(--color-ink-500);
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .timeline-item a {
+    display: block;
+    padding: 1.3rem 1.4rem;
+  }
+
+  .timeline-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+  }
+
+  .timeline-meta time {
+    font-size: 0.8rem;
+    color: var(--color-ink-400);
+    font-family: var(--font-display);
+  }
+
+  .type-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+
+  .is-prompt {
+    color: #0369a1;
+    background: rgba(56, 189, 248, 0.18);
+  }
+
+  .is-tutorial {
+    color: #075985;
+    background: rgba(14, 165, 233, 0.25);
+  }
+
+  .timeline-item h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+  }
+
+  .timeline-item p {
+    margin: 0 0 0.9rem;
+    font-size: 0.88rem;
+    color: var(--color-ink-500);
+    line-height: 1.6;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+
+  .feature-card {
+    padding: 1.8rem 1.5rem;
+  }
+
+  .feature-card h3 {
+    margin: 1.1rem 0 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .feature-card p {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .open-source {
+    padding: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .open-source h2 {
+    margin: 0 0 0.7rem;
+    font-family: var(--font-display);
+  }
+
+  .open-source p {
+    margin: 0;
+    color: var(--color-ink-500);
+    line-height: 1.8;
+    max-width: 40rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding-top: 2.5rem;
+    }
+    .hero-orb {
+      order: -1;
+    }
+    .timeline {
+      grid-template-columns: 1fr;
+    }
+    .feature-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

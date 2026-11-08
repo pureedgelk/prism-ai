@@ -1,0 +1,24 @@
+{
+  "name": "prism-ai",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prism AI 棱镜：开源、每日更新，教你正确高效使用 AI。",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@fontsource-variable/space-grotesk": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "astro": "7.4.0",
+    "tailwindcss": "^4.3.5",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.187.0",
+    "pagefind": "^1.6.0"
+  }
+}

@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { TUTORIAL_CATEGORIES, DIFFICULTIES } from '../../data/categories';
+
+const base = import.meta.env.BASE_URL;
+const entries = (await getCollection('tutorials', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+function fmtDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function readingMinutes(body: string | undefined): number {
+  const chars = (body ?? '').replace(/\s/g, '').length;
+  return Math.max(1, Math.round(chars / 400));
+}
+
+const items = entries.map((e) => ({
+  id: e.id,
+  title: e.data.title,
+  description: e.data.description,
+  category: e.data.category,
+  difficulty: e.data.difficulty,
+  date: fmtDate(e.data.date),
+  minutes: readingMinutes(e.body),
+}));
+---
+
+<BaseLayout title="教程中心 · Prism AI 棱镜" description="从零到熟练的 AI 系统教程，结构化文章配合代码示例，按分类与难度循序渐进。">
+  <section class="page">
+    <header class="page-head reveal">
+      <h1>教程中心</h1>
+      <p>结构化的系统教程，按分类与难度循序渐进，每篇都可以直接照着练。</p>
+    </header>
+
+    <div class="filters glass-panel reveal">
+      <div class="filter-group" role="group" aria-label="按分类筛选">
+        <span class="filter-label">分类</span>
+        <button class="chip active" type="button" data-filter="category" data-value="all">全部</button>
+        {
+          TUTORIAL_CATEGORIES.map((c) => (
+            <button class="chip" type="button" data-filter="category" data-value={c}>{c}</button>
+          ))
+        }
+      </div>
+      <div class="filter-group" role="group" aria-label="按难度筛选">
+        <span class="filter-label">难度</span>
+        <button class="chip active" type="button" data-filter="difficulty" data-value="all">全部</button>
+        {
+          DIFFICULTIES.map((d) => (
+            <button class="chip" type="button" data-filter="difficulty" data-value={d}>{d}</button>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="tutorial-grid" id="tutorial-grid">
+      {
+        items.map((it) => (
+          <article
+            class="tutorial-card glass-card glass-card--hover flow-border reveal"
+            data-category={it.category}
+            data-difficulty={it.difficulty}
+          >
+            <a href={`${base}tutorials/${it.id}`}>
+              <div class="card-cover" aria-hidden="true">
+                <svg width="46" height="46" viewBox="0 0 64 64">
+                  <path d="M32 8 L52 48 L12 48 Z" fill="#38bdf8" opacity="0.85" />
+                  <path d="M32 8 L32 48 L12 48 Z" fill="#fff" opacity="0.5" />
+                </svg>
+              </div>
+              <div class="card-body">
+                <div class="card-meta">
+                  <span class="badge">{it.category}</span>
+                  <span class:list={['difficulty', `diff-${it.difficulty}`]}>{it.difficulty}</span>
+                </div>
+                <h2>{it.title}</h2>
+                <p>{it.description}</p>
+                <div class="card-foot">
+                  <time>{it.date}</time>
+                  <span>约 {it.minutes} 分钟读完</span>
+                </div>
+              </div>
+            </a>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="empty-state" id="empty-state" hidden>
+      <p>该筛选条件下暂时没有教程，试试其他组合。</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--color-ink-500);
+    margin: 0 0 2rem;
+  }
+
+  .filters {
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-ink-500);
+    margin-right: 0.3rem;
+  }
+
+  .chip {
+    padding: 0.4rem 0.95rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-ink-700);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .chip.active {
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .tutorial-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+
+  .tutorial-card a {
+    display: flex;
+    gap: 1.2rem;
+    padding: 1.3rem;
+  }
+
+  .card-cover {
+    flex-shrink: 0;
+    width: 92px;
+    height: 92px;
+    border-radius: 1rem;
+    background: rgba(234, 242, 252, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .difficulty {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+  }
+
+  .diff-入门 { color: #0369a1; background: rgba(56, 189, 248, 0.16); }
+  .diff-进阶 { color: #b45309; background: rgba(251, 191, 36, 0.18); }
+  .diff-实战 { color: #be123c; background: rgba(244, 63, 94, 0.15); }
+
+  .card-body h2 {
+    margin: 0 0 0.45rem;
+    font-size: 1.08rem;
+    line-height: 1.5;
+  }
+
+  .card-body p {
+    margin: 0 0 0.8rem;
+    font-size: 0.86rem;
+    color: var(--color-ink-500);
+    line-height: 1.6;
+  }
+
+  .card-foot {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--color-ink-400);
+    font-family: var(--font-display);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--color-ink-500);
+  }
+
+  @media (max-width: 700px) {
+    .tutorial-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const state = { category: 'all', difficulty: 'all' };
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.tutorial-card'));
+  const emptyState = document.getElementById('empty-state') as HTMLElement;
+  const grid = document.getElementById('tutorial-grid') as HTMLElement;
+
+  document.querySelectorAll<HTMLButtonElement>('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const filter = chip.dataset.filter as 'category' | 'difficulty';
+      document.querySelectorAll<HTMLButtonElement>(`.chip[data-filter="${filter}"]`).forEach((c) =>
+        c.classList.remove('active'),
+      );
+      chip.classList.add('active');
+      state[filter] = chip.dataset.value ?? 'all';
+
+      let count = 0;
+      cards.forEach((card) => {
+        const show =
+          (state.category === 'all' || card.dataset.category === state.category) &&
+          (state.difficulty === 'all' || card.dataset.difficulty === state.difficulty);
+        card.style.display = show ? '' : 'none';
+        if (show) count++;
+      });
+      emptyState.hidden = count !== 0;
+      grid.hidden = count === 0;
+    });
+  });
+</script>
