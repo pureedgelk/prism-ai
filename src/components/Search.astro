@@ -1,5 +1,7 @@
 ---
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
 ---
 
 <div class="search-overlay" id="search-overlay" hidden>
@@ -131,7 +133,9 @@ const base = import.meta.env.BASE_URL;
   const overlay = document.getElementById('search-overlay') as HTMLElement;
   const input = document.getElementById('search-input') as HTMLInputElement;
   const resultsBox = document.getElementById('search-results') as HTMLElement;
-  const base = import.meta.env.BASE_URL;
+  const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
 
   let pagefind: any = null;
   let currentResults: HTMLElement[] = [];
