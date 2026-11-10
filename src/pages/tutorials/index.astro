@@ -56,6 +56,10 @@ const items = entries.map((e) => ({
           ))
         }
       </div>
+      <button id="bookmark-filter" class="bookmark-toggle" type="button" aria-pressed="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>只看收藏</span>
+      </button>
     </div>
 
     <div class="tutorial-grid" id="tutorial-grid">
@@ -63,6 +67,10 @@ const items = entries.map((e) => ({
         items.map((it) => (
           <article
             class="tutorial-card glass-card glass-card--hover flow-border reveal"
+            data-interactive
+            data-kind="tutorial"
+            data-id={it.id}
+            data-actions="bookmark"
             data-category={it.category}
             data-difficulty={it.difficulty}
           >
@@ -154,10 +162,39 @@ const items = entries.map((e) => ({
     border-color: transparent;
   }
 
+  .bookmark-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-ink-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .bookmark-toggle:hover {
+    background: rgba(56, 189, 248, 0.14);
+  }
+
+  .bookmark-toggle[aria-pressed='true'] {
+    color: #fff;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    border-color: transparent;
+  }
+
   .tutorial-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1.2rem;
+  }
+
+  .tutorial-card .ia-actions {
+    padding: 0 1.3rem 1.1rem;
   }
 
   .tutorial-card a {
@@ -236,10 +273,30 @@ const items = entries.map((e) => ({
 </style>
 
 <script>
+  import '../../scripts/interactions';
+  import { getBookmarks } from '../../scripts/store';
+
   const state = { category: 'all', difficulty: 'all' };
+  let bookmarkOnly = false;
+  const bookmarkFilter = document.getElementById('bookmark-filter') as HTMLButtonElement;
   const cards = Array.from(document.querySelectorAll<HTMLElement>('.tutorial-card'));
   const emptyState = document.getElementById('empty-state') as HTMLElement;
   const grid = document.getElementById('tutorial-grid') as HTMLElement;
+
+  function applyFilters() {
+    const saved = getBookmarks('tutorial');
+    let count = 0;
+    cards.forEach((card) => {
+      const show =
+        (state.category === 'all' || card.dataset.category === state.category) &&
+        (state.difficulty === 'all' || card.dataset.difficulty === state.difficulty) &&
+        (!bookmarkOnly || saved.includes(card.dataset.id ?? ''));
+      card.style.display = show ? '' : 'none';
+      if (show) count++;
+    });
+    emptyState.hidden = count !== 0;
+    grid.hidden = count === 0;
+  }
 
   document.querySelectorAll<HTMLButtonElement>('.chip').forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -249,17 +306,18 @@ const items = entries.map((e) => ({
       );
       chip.classList.add('active');
       state[filter] = chip.dataset.value ?? 'all';
-
-      let count = 0;
-      cards.forEach((card) => {
-        const show =
-          (state.category === 'all' || card.dataset.category === state.category) &&
-          (state.difficulty === 'all' || card.dataset.difficulty === state.difficulty);
-        card.style.display = show ? '' : 'none';
-        if (show) count++;
-      });
-      emptyState.hidden = count !== 0;
-      grid.hidden = count === 0;
+      applyFilters();
     });
+  });
+
+  bookmarkFilter.addEventListener('click', () => {
+    bookmarkOnly = !bookmarkOnly;
+    bookmarkFilter.setAttribute('aria-pressed', String(bookmarkOnly));
+    applyFilters();
+  });
+
+  window.addEventListener('prism:store-change', (e) => {
+    const detail = (e as CustomEvent).detail;
+    if (detail?.kind === 'tutorial' && bookmarkOnly) applyFilters();
   });
 </script>

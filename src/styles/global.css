@@ -194,6 +194,63 @@ a {
   animation: float-y 5s ease-in-out infinite;
 }
 
+/* ============ 交互按钮（收藏/点赞/阅读） ============ */
+.ia-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ia-btn,
+.ia-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-ink-700);
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ia-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(56, 189, 248, 0.14);
+}
+
+.ia-btn .ia-icon,
+.ia-read .ia-icon {
+  display: inline-flex;
+  color: var(--color-ink-400);
+  transition: color 0.2s ease;
+}
+
+.ia-btn.is-active {
+  color: #fff;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.32);
+}
+
+.ia-btn.is-active .ia-icon {
+  color: #fff;
+}
+
+.ia-read {
+  cursor: default;
+  color: var(--color-ink-500);
+  background: rgba(234, 242, 252, 0.7);
+}
+
+.ia-read .ia-icon {
+  color: var(--color-ice-600);
+}
+
 /* ============ 降级 ============ */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

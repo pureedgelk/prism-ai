@@ -66,6 +66,15 @@ function fmtDate(d: Date): string {
           )
         }
       </div>
+
+      <div
+        class="article-interactions"
+        data-interactive
+        data-kind="tutorial"
+        data-id={entry.id}
+        data-actions="bookmark,like,read"
+      >
+      </div>
     </header>
 
     <div class="article-layout">
@@ -189,6 +198,10 @@ function fmtDate(d: Date): string {
     font-size: 0.85rem;
     color: var(--color-ink-400);
     font-family: var(--font-display);
+  }
+
+  .article-interactions {
+    margin-top: 1.4rem;
   }
 
   .article-layout {
@@ -413,6 +426,8 @@ function fmtDate(d: Date): string {
 </style>
 
 <script>
+  import '../../scripts/interactions';
+
   // 阅读进度
   const progressBar = document.getElementById('progress-bar') as HTMLElement;
   function updateProgress() {

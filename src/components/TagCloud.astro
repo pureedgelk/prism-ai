@@ -1,0 +1,84 @@
+---
+interface Props {
+  tags: { name: string; count: number }[];
+}
+const { tags } = Astro.props;
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+const max = tags.length ? Math.max(...tags.map((t) => t.count)) : 1;
+const min = tags.length ? Math.min(...tags.map((t) => t.count)) : 0;
+
+function levelOf(count: number): number {
+  if (tags.length <= 1 || max === min) return 3;
+  const ratio = (count - min) / (max - min);
+  return Math.min(5, 1 + Math.round(ratio * 4));
+}
+
+const cloud = tags.map((t) => ({ ...t, level: levelOf(t.count) }));
+---
+
+<div class="tag-cloud">
+  {
+    cloud.map((t) => (
+      <a
+        class:list={['cloud-tag', `lvl-${t.level}`]}
+        href={`${base}tags/${encodeURIComponent(t.name)}`}
+      >
+        <span class="tag-name">#{t.name}</span>
+        <span class="tag-count">{t.count}</span>
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .cloud-tag {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    color: var(--color-ink-700);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .cloud-tag:hover {
+    transform: translateY(-2px);
+    background: rgba(56, 189, 248, 0.14);
+    box-shadow: 0 8px 22px rgba(14, 165, 233, 0.18);
+  }
+
+  .tag-name {
+    font-weight: 600;
+  }
+
+  .tag-count {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    color: var(--color-ink-400);
+  }
+
+  .lvl-1 { font-size: 0.82rem; }
+  .lvl-2 { font-size: 0.95rem; }
+  .lvl-3 { font-size: 1.08rem; }
+  .lvl-4 { font-size: 1.22rem; }
+  .lvl-5 {
+    font-size: 1.38rem;
+    color: var(--color-ice-700);
+  }
+
+  .lvl-5 .tag-count {
+    color: var(--color-ice-600);
+  }
+</style>

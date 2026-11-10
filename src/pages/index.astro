@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CrystalOrb from '../components/three/CrystalOrb.astro';
+import TagCloud from '../components/TagCloud.astro';
 import { getCollection } from 'astro:content';
 
 const base = import.meta.env.BASE_URL.endsWith('/')
@@ -41,6 +42,17 @@ const updates: UpdateItem[] = [
 function fmtDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+// 全站标签频次
+const tagCounts = new Map<string, number>();
+[...prompts, ...tutorials].forEach((entry) => {
+  entry.data.tags.forEach((tag) => {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  });
+});
+const cloudTags = [...tagCounts.entries()]
+  .map(([name, count]) => ({ name, count }))
+  .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
 const features = [
   {
@@ -106,6 +118,17 @@ const features = [
         ))
       }
     </ul>
+  </section>
+
+  <!-- 热门标签 -->
+  <section class="section">
+    <div class="section-head reveal">
+      <h2>热门标签</h2>
+      <p>按出现频次聚合，点标签直达同类内容</p>
+    </div>
+    <div class="cloud-panel glass-panel reveal">
+      <TagCloud tags={cloudTags} />
+    </div>
   </section>
 
   <!-- 特性 -->
@@ -219,6 +242,10 @@ const features = [
   .section-head p {
     margin: 0 0 1.6rem;
     color: var(--color-ink-500);
+  }
+
+  .cloud-panel {
+    padding: 1.8rem 1.8rem;
   }
 
   .timeline {

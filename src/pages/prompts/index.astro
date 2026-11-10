@@ -65,6 +65,10 @@ const cards = entries.map((e) => ({
             }
           </select>
         </label>
+        <button id="bookmark-filter" class="bookmark-toggle" type="button" aria-pressed="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>只看收藏</span>
+        </button>
       </div>
     </div>
 
@@ -74,6 +78,10 @@ const cards = entries.map((e) => ({
         cards.map((c) => (
           <article
             class="prompt-card glass-card glass-card--hover flow-border reveal"
+            data-interactive
+            data-kind="prompt"
+            data-id={c.id}
+            data-actions="bookmark"
             data-category={c.category}
             data-models={c.models.join(',')}
             data-search={[c.title, c.description, c.tags.join(' '), c.body].join(' ').toLowerCase()}
@@ -186,6 +194,38 @@ const cards = entries.map((e) => ({
   .chip.active {
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     color: #fff;
+    border-color: transparent;
+  }
+
+  .select-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .bookmark-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--color-ink-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .bookmark-toggle:hover {
+    background: rgba(56, 189, 248, 0.14);
+  }
+
+  .bookmark-toggle[aria-pressed='true'] {
+    color: #fff;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     border-color: transparent;
   }
 
@@ -320,14 +360,19 @@ const cards = entries.map((e) => ({
 </style>
 
 <script>
+  import '../../scripts/interactions';
+  import { getBookmarks } from '../../scripts/store';
+
   const searchInput = document.getElementById('prompt-search') as HTMLInputElement;
   const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+  const bookmarkFilter = document.getElementById('bookmark-filter') as HTMLButtonElement;
   const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
   const cards = Array.from(document.querySelectorAll<HTMLElement>('.prompt-card'));
   const emptyState = document.getElementById('empty-state') as HTMLElement;
   const grid = document.getElementById('prompt-grid') as HTMLElement;
 
   let activeCategory = 'all';
+  let bookmarkOnly = false;
 
   function syncQuery() {
     const params = new URLSearchParams(location.search);
@@ -344,13 +389,15 @@ const cards = entries.map((e) => ({
   function applyFilters() {
     const keyword = searchInput.value.trim().toLowerCase();
     const model = modelSelect.value;
+    const saved = getBookmarks('prompt');
     let visibleCount = 0;
 
     cards.forEach((card) => {
       const matchCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
       const matchModel = model === 'all' || (card.dataset.models ?? '').split(',').includes(model);
       const matchKeyword = !keyword || (card.dataset.search ?? '').includes(keyword);
-      const show = matchCategory && matchModel && matchKeyword;
+      const matchBookmark = !bookmarkOnly || saved.includes(card.dataset.id ?? '');
+      const show = matchCategory && matchModel && matchKeyword && matchBookmark;
       card.style.display = show ? '' : 'none';
       if (show) visibleCount++;
     });
@@ -371,6 +418,18 @@ const cards = entries.map((e) => ({
 
   searchInput.addEventListener('input', applyFilters);
   modelSelect.addEventListener('change', applyFilters);
+
+  bookmarkFilter.addEventListener('click', () => {
+    bookmarkOnly = !bookmarkOnly;
+    bookmarkFilter.setAttribute('aria-pressed', String(bookmarkOnly));
+    applyFilters();
+  });
+
+  // 收藏状态变化时，若开启了"只看收藏"，实时刷新
+  window.addEventListener('prism:store-change', (e) => {
+    const detail = (e as CustomEvent).detail;
+    if (detail?.kind === 'prompt' && bookmarkOnly) applyFilters();
+  });
 
   // 展开/收起
   cards.forEach((card) => {
@@ -403,6 +462,8 @@ const cards = entries.map((e) => ({
     searchInput.value = '';
     modelSelect.value = 'all';
     activeCategory = 'all';
+    bookmarkOnly = false;
+    bookmarkFilter.setAttribute('aria-pressed', 'false');
     chips.forEach((c) => c.classList.toggle('active', c.dataset.category === 'all'));
     applyFilters();
   });
