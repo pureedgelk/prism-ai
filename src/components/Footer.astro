@@ -1,5 +1,19 @@
 ---
 const year = new Date().getFullYear();
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+const internalLinks = [
+  { href: '', label: '首页' },
+  { href: 'prompts', label: '提示词库' },
+  { href: 'tutorials', label: '教程中心' },
+  { href: 'resources', label: '资源导航' },
+  { href: 'models', label: '模型对比' },
+  { href: 'archive', label: '更新归档' },
+  { href: 'tags', label: '标签索引' },
+  { href: 'about', label: '关于棱镜' },
+];
 ---
 
 <footer class="site-footer">
@@ -15,7 +29,17 @@ const year = new Date().getFullYear();
       <p class="footer-slogan">折射 AI 的每一束光，照见高效学习的路径。</p>
     </div>
 
+    <nav class="footer-col" aria-label="站内导航">
+      <h2 class="col-title">站内导航</h2>
+      {
+        internalLinks.map((link) => (
+          <a href={base + link.href}>{link.label}</a>
+        ))
+      }
+    </nav>
+
     <nav class="footer-links" aria-label="外部链接">
+      <h2 class="col-title">GitHub</h2>
       <a href="https://github.com/pureedgelk" target="_blank" rel="noopener noreferrer">
         GitHub 主页
       </a>
@@ -65,6 +89,30 @@ const year = new Date().getFullYear();
     margin-top: 0.6rem;
     color: var(--color-ink-500);
     font-size: 0.9rem;
+  }
+
+  .col-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0 0 0.7rem;
+    color: var(--color-ink-900);
+  }
+
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .footer-col a {
+    color: var(--color-ink-700);
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+  }
+
+  .footer-col a:hover {
+    color: var(--color-ice-700);
   }
 
   .footer-links {

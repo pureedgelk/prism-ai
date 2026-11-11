@@ -9,6 +9,14 @@ const nav = [
   { href: 'prompts', label: '提示词库', match: (p: string) => p.includes(`${base}prompts`) },
   { href: 'tutorials', label: '教程', match: (p: string) => p.includes(`${base}tutorials`) },
 ];
+
+const moreLinks = [
+  { href: 'resources', label: '资源导航' },
+  { href: 'models', label: '模型对比' },
+  { href: 'archive', label: '更新归档' },
+  { href: 'tags', label: '标签索引' },
+  { href: 'about', label: '关于棱镜' },
+];
 ---
 
 <header class="site-header">
@@ -39,6 +47,20 @@ const nav = [
           </a>
         ))
       }
+      <div class="more-dropdown" data-dropdown>
+        <button id="more-toggle" class="more-toggle-btn" type="button" aria-expanded="false" aria-controls="more-menu">
+          <span>更多</span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div id="more-menu" class="more-menu glass-panel" role="menu" hidden>
+          {
+            moreLinks.map((link) => (
+              <a class="more-link" href={base + link.href} role="menuitem">{link.label}</a>
+            ))
+          }
+        </div>
+      </div>
+
       <button id="search-open" class="search-btn" type="button" aria-label="打开搜索">
         <span>搜索…</span>
         <kbd>Ctrl K</kbd>
@@ -62,6 +84,12 @@ const nav = [
         >
           {item.label}
         </a>
+      ))
+    }
+    <p class="mobile-group-label">更多内容</p>
+    {
+      moreLinks.map((link) => (
+        <a class="mobile-link" href={base + link.href}>{link.label}</a>
       ))
     }
     <button id="mobile-search-open" class="mobile-search" type="button">全站搜索</button>
@@ -134,6 +162,75 @@ const nav = [
     color: var(--color-ice-700);
     background: rgba(56, 189, 248, 0.16);
     font-weight: 600;
+  }
+
+  .more-dropdown {
+    position: relative;
+  }
+
+  .more-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--color-ink-700);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .more-toggle-btn:hover {
+    background: rgba(56, 189, 248, 0.12);
+  }
+
+  .more-toggle-btn[aria-expanded='true'] {
+    color: var(--color-ice-700);
+  }
+
+  .more-toggle-btn[aria-expanded='true'] .chevron {
+    transform: rotate(180deg);
+  }
+
+  .chevron {
+    transition: transform 0.25s ease;
+  }
+
+  .more-menu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    min-width: 180px;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    box-shadow: 0 18px 44px rgba(14, 165, 233, 0.24);
+  }
+
+  .more-link {
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.7rem;
+    font-size: 0.9rem;
+    color: var(--color-ink-700);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .more-link:hover {
+    background: rgba(56, 189, 248, 0.14);
+    color: var(--color-ice-700);
+  }
+
+  .mobile-group-label {
+    margin: 0.8rem 0 0.2rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-ink-400);
+    letter-spacing: 0.08em;
   }
 
   .search-btn {
@@ -245,6 +342,31 @@ const nav = [
     const open = toggle.getAttribute('aria-expanded') === 'true';
     toggle.setAttribute('aria-expanded', String(!open));
     menu?.toggleAttribute('hidden', open);
+  });
+
+  // “更多”下拉
+  const moreToggle = document.getElementById('more-toggle');
+  const moreMenu = document.getElementById('more-menu');
+
+  function closeMore() {
+    moreToggle?.setAttribute('aria-expanded', 'false');
+    moreMenu?.setAttribute('hidden', '');
+  }
+
+  moreToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = moreToggle.getAttribute('aria-expanded') === 'true';
+    moreToggle.setAttribute('aria-expanded', String(!open));
+    moreMenu?.toggleAttribute('hidden', open);
+  });
+
+  document.addEventListener('click', (e) => {
+    const dropdown = (e.target as HTMLElement).closest('[data-dropdown]');
+    if (!dropdown) closeMore();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMore();
   });
 
   const openSearch = () => window.dispatchEvent(new CustomEvent('prism:search-open'));
