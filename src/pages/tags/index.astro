@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagCloud from '../../components/TagCloud.astro';
+import { getCollection } from 'astro:content';
+
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+const prompts = await getCollection('prompts');
+const tutorials = await getCollection('tutorials', ({ data }) => !data.draft);
+
+const tagCounts = new Map<string, number>();
+[...prompts, ...tutorials].forEach((entry) => {
+  entry.data.tags.forEach((tag) => {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  });
+});
+
+const tags = [...tagCounts.entries()]
+  .map(([name, count]) => ({ name, count }))
+  .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+---
+
+<BaseLayout title="标签索引 · Prism AI 棱镜" description="全站标签统一聚合，按标签查看所有相关提示词与教程。">
+  <section class="page">
+    <header class="page-head reveal">
+      <h1>标签索引</h1>
+      <p>共 {tags.length} 个标签，点击任意标签查看其下全部内容。</p>
+    </header>
+
+    <div class="cloud-panel glass-panel reveal">
+      <TagCloud tags={tags} />
+    </div>
+
+    <ul class="tag-list">
+      {
+        tags.map((t) => (
+          <li class="glass-card reveal">
+            <a href={`${base}tags/${encodeURIComponent(t.name)}`}>
+              <span class="tag-name">#{t.name}</span>
+              <span class="tag-count">{t.count} 条内容</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--color-ink-500);
+    margin: 0 0 2rem;
+  }
+
+  .cloud-panel {
+    padding: 1.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .tag-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .tag-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 1.1rem 1.4rem;
+  }
+
+  .tag-name {
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+
+  .tag-count {
+    font-size: 0.82rem;
+    color: var(--color-ink-400);
+    font-family: var(--font-display);
+  }
+
+  @media (max-width: 650px) {
+    .tag-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,203 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+type LinkedItem = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  href: string;
+};
+
+export async function getStaticPaths() {
+  const base = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : import.meta.env.BASE_URL + '/';
+  const prompts = await getCollection('prompts');
+  const tutorials = await getCollection('tutorials', ({ data }) => !data.draft);
+
+  const tagMap = new Map<string, { prompts: LinkedItem[]; tutorials: LinkedItem[] }>();
+
+  const ensure = (tag: string) => {
+    if (!tagMap.has(tag)) tagMap.set(tag, { prompts: [], tutorials: [] });
+    return tagMap.get(tag)!;
+  };
+
+  prompts.forEach((p) => {
+    const item: LinkedItem = {
+      id: p.id,
+      title: p.data.title,
+      description: p.data.description,
+      category: p.data.category,
+      href: `${base}prompts`,
+    };
+    p.data.tags.forEach((tag) => ensure(tag).prompts.push(item));
+  });
+
+  tutorials.forEach((t) => {
+    const item: LinkedItem = {
+      id: t.id,
+      title: t.data.title,
+      description: t.data.description,
+      category: t.data.category,
+      href: `${base}tutorials/${t.id}`,
+    };
+    t.data.tags.forEach((tag) => ensure(tag).tutorials.push(item));
+  });
+
+  return [...tagMap.entries()].map(([tag, items]) => ({
+    params: { tag },
+    props: { tag, ...items },
+  }));
+}
+
+interface Props {
+  tag: string;
+  prompts: LinkedItem[];
+  tutorials: LinkedItem[];
+}
+
+const { tag, prompts, tutorials } = Astro.props;
+const total = prompts.length + tutorials.length;
+---
+
+<BaseLayout title={`#${tag} · Prism AI 棱镜`} description={`标签 ${tag} 下的全部提示词与教程，共 ${total} 条内容。`}>
+  <section class="page">
+    <header class="page-head reveal">
+      <nav class="crumbs">
+        <a href={base}>首页</a>
+        <span>/</span>
+        <a href={`${base}tags`}>标签</a>
+        <span>/</span>
+        <span>#{tag}</span>
+      </nav>
+      <h1>#{tag}</h1>
+      <p>该标签下共 {total} 条内容（{prompts.length} 条提示词 · {tutorials.length} 篇教程）。</p>
+    </header>
+
+    {
+      prompts.length > 0 && (
+        <section class="block">
+          <h2 class="block-title">提示词</h2>
+          <ul class="item-list">
+            {prompts.map((p) => (
+              <li class="glass-card glass-card--hover flow-border reveal">
+                <a href={p.href}>
+                  <div class="item-top">
+                    <h3>{p.title}</h3>
+                    <span class="badge">{p.category}</span>
+                  </div>
+                  <p>{p.description}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      tutorials.length > 0 && (
+        <section class="block">
+          <h2 class="block-title">教程</h2>
+          <ul class="item-list">
+            {tutorials.map((t) => (
+              <li class="glass-card glass-card--hover flow-border reveal">
+                <a href={t.href}>
+                  <div class="item-top">
+                    <h3>{t.title}</h3>
+                    <span class="badge">{t.category}</span>
+                  </div>
+                  <p>{t.description}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .crumbs {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-ink-500);
+    margin-bottom: 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--color-ink-500);
+    margin: 0;
+  }
+
+  .block {
+    margin-top: 2.5rem;
+  }
+
+  .block-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0 0 1rem;
+  }
+
+  .item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.1rem;
+  }
+
+  .item-list a {
+    display: block;
+    padding: 1.3rem 1.4rem;
+  }
+
+  .item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .item-top h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  .item-list p {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: 0.87rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 700px) {
+    .item-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

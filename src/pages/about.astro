@@ -1,0 +1,234 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+const principles = [
+  {
+    title: '正确优先',
+    desc: '每条方法都经过验证，强调可复现的步骤，不讲玄学、不堆概念，让你照着做就能成。',
+    icon: 'M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z',
+  },
+  {
+    title: '即学即用',
+    desc: '提示词一键复制，教程配合代码与示例，从「看懂」到「会用」之间不留鸿沟。',
+    icon: 'M13 2L3 14h7l-1 8 10-12h-7l1-8z',
+  },
+  {
+    title: '每日更新',
+    desc: '开源共建、持续迭代，追踪 AI 最新的高效用法，让知识库和工具一起成长。',
+    icon: 'M12 6v6l4 2M21 12a9 9 0 11-9-9',
+  },
+];
+
+const facts = [
+  { num: '2', label: '核心内容集合' },
+  { num: '6', label: '提示词场景分类' },
+  { num: '5', label: '系统教程分类' },
+  { num: '100%', label: '开源 · MIT' },
+];
+---
+
+<BaseLayout title="关于 Prism AI 棱镜" description="Prism AI 棱镜：一个开源、每日更新，教你正确高效使用 AI 的学习站。">
+  <section class="about">
+    <header class="about-head reveal">
+      <span class="about-tag">关于</span>
+      <h1>折射 AI 的每一束光</h1>
+      <p>
+        Prism AI 棱镜是一个开源、每日更新的 AI 学习站。我们相信，AI 不是少数人的玩具，而是每个人都能学会的工具——前提是有人把正确的方法讲清楚。
+      </p>
+    </header>
+
+    <div class="story glass-panel reveal">
+      <h2>为什么叫「棱镜」</h2>
+      <p>
+        一束白光穿过棱镜，会被分解成清晰的光谱。面对 AI 这个庞杂的新事物，我们想做的正是那枚棱镜：把零散的信息、复杂的概念，拆解成一条条清晰、可执行的路径，让你知道第一步该学什么、每一步该怎么做。
+      </p>
+      <p>
+        这里没有故弄玄虚的术语墙，也没有「一键暴富」的神话。只有经过验证的提示词、循序渐进的教程，以及每天都在更新的实践记录。
+      </p>
+    </div>
+
+    <div class="principle-grid">
+      {
+        principles.map((p) => (
+          <article class="principle-card glass-card glass-card--hover flow-border reveal">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d={p.icon} />
+            </svg>
+            <h3>{p.title}</h3>
+            <p>{p.desc}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <div class="facts glass-panel reveal">
+      {
+        facts.map((f) => (
+          <div class="fact">
+            <span class="fact-num">{f.num}</span>
+            <span class="fact-label">{f.label}</span>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="cta glass-panel reveal">
+      <div>
+        <h2>一起把这件事做下去</h2>
+        <p>全站内容基于 MIT 协议开源，欢迎在 GitHub 上提交 Issue 与 PR，也可以从今天的提示词开始你的第一次实践。</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-primary" href="https://github.com/pureedgelk/prism-ai" target="_blank" rel="noopener noreferrer">访问 GitHub 仓库</a>
+        <a class="btn btn-ghost" href={base + 'prompts'}>从提示词开始</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem;
+  }
+
+  .about-head {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .about-tag {
+    display: inline-block;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-ice-700);
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    margin-bottom: 1.2rem;
+  }
+
+  .about-head h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    margin: 0 0 1rem;
+  }
+
+  .about-head p {
+    max-width: 42rem;
+    margin: 0 auto;
+    color: var(--color-ink-500);
+    line-height: 1.9;
+    font-size: 1.02rem;
+  }
+
+  .story {
+    padding: 2rem 2.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .story h2 {
+    font-family: var(--font-display);
+    margin: 0 0 1rem;
+    font-size: 1.4rem;
+  }
+
+  .story p {
+    color: var(--color-ink-700);
+    line-height: 1.9;
+    margin: 0 0 1rem;
+  }
+
+  .story p:last-child {
+    margin-bottom: 0;
+  }
+
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+  }
+
+  .principle-card {
+    padding: 1.7rem 1.5rem;
+  }
+
+  .principle-card h3 {
+    margin: 1rem 0 0.5rem;
+    font-size: 1.15rem;
+  }
+
+  .principle-card p {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 1.8rem 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .fact-num {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(120deg, #38bdf8, #0ea5e9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .fact-label {
+    font-size: 0.85rem;
+    color: var(--color-ink-500);
+  }
+
+  .cta {
+    padding: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cta h2 {
+    font-family: var(--font-display);
+    margin: 0 0 0.6rem;
+  }
+
+  .cta p {
+    margin: 0;
+    color: var(--color-ink-500);
+    line-height: 1.8;
+    max-width: 36rem;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 850px) {
+    .principle-grid {
+      grid-template-columns: 1fr;
+    }
+    .facts {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.4rem;
+    }
+  }
+</style>

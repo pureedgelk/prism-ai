@@ -1,0 +1,207 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { models, compareDimensions } from '../data/models';
+---
+
+<BaseLayout title="模型对比 · Prism AI 棱镜" description="主流 AI 模型特点、强项与适用场景对比，帮你根据任务选择合适的模型。">
+  <section class="page">
+    <header class="page-head reveal">
+      <h1>AI 模型对比</h1>
+      <p>没有「最好」的模型，只有最适合当前任务的模型。按强项和场景选，比盲目追新更重要。</p>
+      <p class="disclaimer">以下为定性梳理，能力与价格随版本快速变化，具体请以各厂商官方最新说明为准。</p>
+    </header>
+
+    <div class="model-grid">
+      {
+        models.map((m) => (
+          <article class="model-card glass-card glass-card--hover flow-border reveal">
+            <div class="model-card-head">
+              <h2>{m.name}</h2>
+              <span class="badge">{m.vendor}</span>
+            </div>
+            <ul class="strength-list">
+              {m.strengths.map((s) => <li>{s}</li>)}
+            </ul>
+            <p class="best-for"><span class="bf-label">最适合</span>{m.bestFor}</p>
+            <div class="model-meta">
+              <span>中文 · {m.chinese}</span>
+              <span>{m.access}</span>
+              <span>{m.pricing}</span>
+            </div>
+            <p class="note">{m.note}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <section class="table-section reveal">
+      <h2>速查对比表</h2>
+      <div class="table-wrap glass-panel">
+        <table>
+          <thead>
+            <tr>
+              <th>模型</th>
+              {compareDimensions.map((d) => <th>{d.label}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {
+              models.map((m) => (
+                <tr>
+                  <th class="row-head">{m.name}</th>
+                  <td>{m.vendor}</td>
+                  <td>{m.bestFor}</td>
+                  <td>{m.chinese}</td>
+                  <td>{m.access}</td>
+                  <td>{m.pricing}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </section>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--color-ink-500);
+    margin: 0 0 0.5rem;
+  }
+
+  .disclaimer {
+    font-size: 0.85rem;
+    color: var(--color-ink-400);
+  }
+
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+    margin: 2rem 0 3rem;
+  }
+
+  .model-card {
+    padding: 1.6rem 1.7rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .model-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .model-card-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+
+  .strength-list {
+    margin: 0 0 1rem;
+    padding-left: 1.2rem;
+    color: var(--color-ink-700);
+    font-size: 0.92rem;
+  }
+
+  .strength-list li {
+    margin-bottom: 0.35rem;
+  }
+
+  .best-for {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: var(--color-ink-700);
+    line-height: 1.7;
+  }
+
+  .bf-label {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--color-ice-700);
+    margin-right: 0.4rem;
+  }
+
+  .model-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .model-meta span {
+    font-size: 0.78rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(234, 242, 252, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    color: var(--color-ink-700);
+  }
+
+  .note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-ink-500);
+    line-height: 1.7;
+  }
+
+  .table-section h2 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+  }
+
+  .table-wrap {
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+    color: var(--color-ink-700);
+    vertical-align: top;
+  }
+
+  thead th {
+    color: var(--color-ink-900);
+    font-weight: 700;
+    background: rgba(56, 189, 248, 0.1);
+  }
+
+  .row-head {
+    color: var(--color-ice-700);
+    font-weight: 700;
+  }
+
+  @media (max-width: 850px) {
+    .model-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
