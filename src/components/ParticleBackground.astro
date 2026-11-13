@@ -29,6 +29,8 @@
     y: number;
     vx: number;
     vy: number;
+    baseVx: number; // 恒定巡航速度（平时规律浮动用）
+    baseVy: number;
     r: number; // 核心半径
     color: RGB;
     halo: RGB;
@@ -49,10 +51,14 @@
 
   const LINK_DIST = isMobile ? 150 : 220; // 连线距离阈值（增大，让网络张开）
   const ATTRACT_R = isMobile ? 120 : 160; // 鼠标吸引半径
-  const MAX_SPEED = isMobile ? 42 : 62; // 最大漂移速度 px/s（明显加快）
+  const CRUISE_SPEED = isMobile ? 42 : 62; // 巡航（平时浮动）速度上限 px/s
+  const CHASE_SPEED = isMobile ? 150 : 210; // 鼠标附近朝鼠标靠拢的速度
+  const CHASE_MAX = isMobile ? 220 : 300; // 鼠标跟随时允许的最大速度（跟得上鼠标）
   const MAX_LINKS = 2; // 每个粒子最多连最近的 2 条，避免放射状乱线
 
   const mouse = { x: -9999, y: -9999, active: false };
+  const mouseVel = { x: 0, y: 0 }; // 鼠标自身移动速度
+  let lastPointer = { x: 0, y: 0, t: 0 };
 
   function pickColor(): { color: RGB; halo: RGB } {
     const n = Math.random();
@@ -74,11 +80,15 @@
     particles = [];
     for (let i = 0; i < count; i++) {
       const { color, halo } = pickColor();
+      const bvx = (Math.random() - 0.5) * 70;
+      const bvy = (Math.random() - 0.5) * 70;
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 70,
-        vy: (Math.random() - 0.5) * 70,
+        vx: bvx,
+        vy: bvy,
+        baseVx: bvx,
+        baseVy: bvy,
         r: 1.6 + Math.random() * 1.4,
         color,
         halo,
@@ -172,48 +182,70 @@
   }
 
   function update(dt: number): void {
+    // 鼠标停下后，鼠标速度快速衰减到 0
+    const mDecay = Math.exp(-6 * dt);
+    mouseVel.x *= mDecay;
+    mouseVel.y *= mDecay;
+
+    // 巡航回归（自然）与鼠标跟随（快速跟手）的平滑系数
+    const cruiseLerp = 1 - Math.exp(-3 * dt);
+    const chaseLerp = 1 - Math.exp(-10 * dt);
+
     for (const p of particles) {
-      // 鼠标轻度吸引
+      let targetVx = p.baseVx;
+      let targetVy = p.baseVy;
+      let lerp = cruiseLerp;
+      let maxSp = CRUISE_SPEED;
+
+      // 鼠标吸引范围内：目标 = 朝鼠标靠拢 + 鼠标自身移动速度
       if (mouse.active) {
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const d = Math.hypot(dx, dy);
-        if (d < ATTRACT_R && d > 0.01) {
-          const force = (1 - d / ATTRACT_R) * 130; // px/s^2，温和
-          p.vx += (dx / d) * force * dt;
-          p.vy += (dy / d) * force * dt;
+        if (d < ATTRACT_R) {
+          const influence = 1 - d / ATTRACT_R; // 越靠近鼠标越强
+          const ux = d > 0.01 ? dx / d : 0;
+          const uy = d > 0.01 ? dy / d : 0;
+          const chase = CHASE_SPEED * influence;
+          targetVx = ux * chase + mouseVel.x * influence;
+          targetVy = uy * chase + mouseVel.y * influence;
+          lerp = chaseLerp;
+          maxSp = CHASE_MAX;
         }
       }
 
-      // 弱阻尼，让吸引结束后速度回落
-      const damp = 1 - 0.35 * dt;
-      p.vx *= damp;
-      p.vy *= damp;
+      // 速度向目标平滑逼近（不再用阻尼衰减到零）
+      p.vx += (targetVx - p.vx) * lerp;
+      p.vy += (targetVy - p.vy) * lerp;
 
       // 限速
       const sp = Math.hypot(p.vx, p.vy);
-      if (sp > MAX_SPEED) {
-        p.vx = (p.vx / sp) * MAX_SPEED;
-        p.vy = (p.vy / sp) * MAX_SPEED;
+      if (sp > maxSp) {
+        p.vx = (p.vx / sp) * maxSp;
+        p.vy = (p.vy / sp) * maxSp;
       }
 
       p.x += p.vx * dt;
       p.y += p.vy * dt;
 
-      // 边界反弹
+      // 边界反弹（巡航方向同步翻转）
       if (p.x < 0) {
         p.x = 0;
         p.vx = Math.abs(p.vx);
+        p.baseVx = Math.abs(p.baseVx);
       } else if (p.x > width) {
         p.x = width;
         p.vx = -Math.abs(p.vx);
+        p.baseVx = -Math.abs(p.baseVx);
       }
       if (p.y < 0) {
         p.y = 0;
         p.vy = Math.abs(p.vy);
+        p.baseVy = Math.abs(p.baseVy);
       } else if (p.y > height) {
         p.y = height;
         p.vy = -Math.abs(p.vy);
+        p.baseVy = -Math.abs(p.baseVy);
       }
     }
   }
@@ -255,6 +287,24 @@
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouse.active = true;
+
+      // 计算鼠标瞬时速度并平滑
+      const now = performance.now();
+      if (lastPointer.t > 0) {
+        const dtm = Math.max((now - lastPointer.t) / 1000, 0.001);
+        let mvx = (e.clientX - lastPointer.x) / dtm;
+        let mvy = (e.clientY - lastPointer.y) / dtm;
+        const ms = Math.hypot(mvx, mvy);
+        if (ms > CHASE_MAX) {
+          mvx = (mvx / ms) * CHASE_MAX;
+          mvy = (mvy / ms) * CHASE_MAX;
+        }
+        mouseVel.x = mouseVel.x * 0.6 + mvx * 0.4;
+        mouseVel.y = mouseVel.y * 0.6 + mvy * 0.4;
+      }
+      lastPointer.x = e.clientX;
+      lastPointer.y = e.clientY;
+      lastPointer.t = now;
     },
     { passive: true },
   );
@@ -262,6 +312,7 @@
     'pointerleave',
     () => {
       mouse.active = false;
+      lastPointer.t = 0;
     },
     { passive: true },
   );
