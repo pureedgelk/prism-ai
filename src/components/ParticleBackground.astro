@@ -47,9 +47,10 @@
   let dpr = 1;
   let particles: Particle[] = [];
 
-  const LINK_DIST = isMobile ? 95 : 130; // 连线距离阈值
-  const ATTRACT_R = isMobile ? 110 : 150; // 鼠标吸引半径
-  const MAX_SPEED = isMobile ? 20 : 26; // 最大漂移速度 px/s
+  const LINK_DIST = isMobile ? 150 : 220; // 连线距离阈值（增大，让网络张开）
+  const ATTRACT_R = isMobile ? 120 : 160; // 鼠标吸引半径
+  const MAX_SPEED = isMobile ? 42 : 62; // 最大漂移速度 px/s（明显加快）
+  const MAX_LINKS = 2; // 每个粒子最多连最近的 2 条，避免放射状乱线
 
   const mouse = { x: -9999, y: -9999, active: false };
 
@@ -76,8 +77,8 @@
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 22,
-        vy: (Math.random() - 0.5) * 22,
+        vx: (Math.random() - 0.5) * 70,
+        vy: (Math.random() - 0.5) * 70,
         r: 1.6 + Math.random() * 1.4,
         color,
         halo,
@@ -105,27 +106,45 @@
     return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
   }
 
-  function drawLinks(t: number): void {
+  function drawLinks(): void {
     const n = particles.length;
+    const edges = new Set<string>();
+
+    // 每个粒子只保留最近的 MAX_LINKS 个邻居
     for (let i = 0; i < n; i++) {
       const p = particles[i];
-      const twI = 0.45 + 0.55 * Math.sin(t * p.twinkleSpeed + p.phase);
-      for (let j = i + 1; j < n; j++) {
+      const neighbors: { j: number; d: number }[] = [];
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
         const q = particles[j];
         const dx = p.x - q.x;
         const dy = p.y - q.y;
         const d2 = dx * dx + dy * dy;
-        if (d2 > LINK_DIST * LINK_DIST) continue;
-        const d = Math.sqrt(d2);
-        const twJ = 0.45 + 0.55 * Math.sin(t * q.twinkleSpeed + q.phase);
-        const strength = (1 - d / LINK_DIST) * 0.55 * ((twI + twJ) / 2);
-        ctx!.strokeStyle = rgba(mix(p.color, q.color), strength);
-        ctx!.lineWidth = 1;
-        ctx!.beginPath();
-        ctx!.moveTo(p.x, p.y);
-        ctx!.lineTo(q.x, q.y);
-        ctx!.stroke();
+        if (d2 <= LINK_DIST * LINK_DIST) {
+          neighbors.push({ j, d: Math.sqrt(d2) });
+        }
       }
+      neighbors.sort((a, b) => a.d - b.d);
+      for (let k = 0; k < Math.min(MAX_LINKS, neighbors.length); k++) {
+        const a = Math.min(i, neighbors[k].j);
+        const b = Math.max(i, neighbors[k].j);
+        edges.add(a + ':' + b);
+      }
+    }
+
+    // 去重后统一绘制，透明度只随距离、不随闪烁跳动
+    for (const edge of edges) {
+      const [i, j] = edge.split(':').map(Number);
+      const p = particles[i];
+      const q = particles[j];
+      const d = Math.hypot(p.x - q.x, p.y - q.y);
+      const strength = (1 - d / LINK_DIST) * 0.4;
+      ctx!.strokeStyle = rgba(mix(p.color, q.color), strength);
+      ctx!.lineWidth = 1;
+      ctx!.beginPath();
+      ctx!.moveTo(p.x, p.y);
+      ctx!.lineTo(q.x, q.y);
+      ctx!.stroke();
     }
   }
 
@@ -134,9 +153,9 @@
       const tw = 0.4 + 0.6 * Math.sin(t * p.twinkleSpeed + p.phase);
 
       // 柔和外晕
-      ctx!.fillStyle = rgba(p.halo, 0.16 * tw);
+      ctx!.fillStyle = rgba(p.halo, 0.12 * tw);
       ctx!.beginPath();
-      ctx!.arc(p.x, p.y, p.r * 3.2, 0, Math.PI * 2);
+      ctx!.arc(p.x, p.y, p.r * 3.0, 0, Math.PI * 2);
       ctx!.fill();
 
       // 明亮核心（向白色混合）
@@ -201,7 +220,7 @@
 
   function render(t: number): void {
     ctx!.clearRect(0, 0, width, height);
-    drawLinks(t);
+    drawLinks();
     drawPoints(t);
   }
 
