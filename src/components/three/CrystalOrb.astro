@@ -99,10 +99,22 @@
   }
 
   if (isMobile || !supportsWebGL()) {
-    // 移动端不初始化 WebGL，直接使用纯 CSS 回退，避免 three.js 拖慢首屏
+    // 移动端或不支持 WebGL：直接使用纯 CSS 回退，不初始化 three.js
     root.classList.add('is-fallback');
   } else {
-    await init(reducedMotion);
+    // 桌面端：首屏先显示 CSS 回退球，等浏览器空闲（首屏内容渲染后）再初始化 WebGL，
+    // 避免 three.js 重活阻塞首屏；timeout 保证最迟 2s 启动
+    root.classList.add('is-fallback');
+    const run = () => {
+      init(reducedMotion).catch(() => {
+        // 初始化失败则保持 CSS 回退
+      });
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(run, { timeout: 2000 });
+    } else {
+      window.setTimeout(run, 500);
+    }
   }
 
   async function init(lowMotion: boolean) {
@@ -118,7 +130,6 @@
       alpha: true,
       antialias: !isMobile,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: true,
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
 
@@ -129,7 +140,7 @@
     scene.add(group);
 
     // ===== 水晶球本体 =====
-    const orbGeo = new THREE.SphereGeometry(1.55, isMobile ? 48 : 80, isMobile ? 48 : 80);
+    const orbGeo = new THREE.SphereGeometry(1.55, 48, 48);
     const orbMat = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color('#dbeffe'),
       metalness: 0,
@@ -180,7 +191,7 @@
       depthWrite: false,
       side: THREE.BackSide,
     });
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(1.92, 64, 64), glowMat);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(1.92, 32, 32), glowMat);
     group.add(glow);
 
     // ===== 球内粒子（保留）=====
@@ -438,6 +449,8 @@
       });
 
       renderer.render(scene, camera);
+      // 首帧 WebGL 渲染完成后移除 CSS 回退（重复调用无副作用）
+      root.classList.remove('is-fallback');
       if (visible) rafId = requestAnimationFrame(tick);
     }
 
@@ -458,10 +471,11 @@
     ringBundles.forEach((bundle) => updateParticles(bundle, 0));
 
     if (lowMotion) {
-      // 低动效：下一绘制帧渲染一次静态画面即停止（preserveDrawingBuffer 保证内容保留）
+      // 低动效：下一绘制帧渲染一次静态画面即停止，随后切换到 WebGL 画面
       rafId = requestAnimationFrame(() => {
         resize();
         renderer.render(scene, camera);
+        root.classList.remove('is-fallback');
       });
     } else {
       io.observe(root);
