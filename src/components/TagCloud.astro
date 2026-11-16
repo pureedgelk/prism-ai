@@ -47,9 +47,9 @@ const cloud = tags.map((t) => ({ ...t, level: levelOf(t.count) }));
     gap: 0.35rem;
     padding: 0.4rem 0.9rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(56, 189, 248, 0.28);
-    color: var(--color-ink-700);
+    background: var(--surface-solid);
+    border: 1px solid var(--border-soft);
+    color: var(--text-body);
     transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -75,10 +75,10 @@ const cloud = tags.map((t) => ({ ...t, level: levelOf(t.count) }));
   .lvl-4 { font-size: 1.22rem; }
   .lvl-5 {
     font-size: 1.38rem;
-    color: var(--color-ice-700);
+    color: var(--color-ice-500);
   }
 
   .lvl-5 .tag-count {
-    color: var(--color-ice-600);
+    color: var(--color-ice-500);
   }
 </style>

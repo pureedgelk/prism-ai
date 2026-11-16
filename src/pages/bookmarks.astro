@@ -1,0 +1,354 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import type { Kind } from '../scripts/store';
+
+const base = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : import.meta.env.BASE_URL + '/';
+
+const prompts = await getCollection('prompts');
+const tutorials = await getCollection('tutorials');
+
+type BmEntry = {
+  id: string;
+  kind: Kind;
+  type: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  href: string;
+  dateLabel: string;
+};
+
+function fmt(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate(),
+  ).padStart(2, '0')}`;
+}
+
+const entries: BmEntry[] = [
+  ...prompts.map((p) => ({
+    id: p.id,
+    kind: 'prompt' as Kind,
+    type: '提示词',
+    title: p.data.title,
+    description: p.data.description,
+    category: p.data.category,
+    tags: p.data.tags,
+    href: `${base}prompts/${p.id}`,
+    dateLabel: fmt(p.data.date),
+  })),
+  ...tutorials.map((t) => ({
+    id: t.id,
+    kind: 'tutorial' as Kind,
+    type: '教程',
+    title: t.data.title,
+    description: t.data.description,
+    category: t.data.category,
+    tags: t.data.tags,
+    href: `${base}tutorials/${t.id}`,
+    dateLabel: fmt(t.data.date),
+  })),
+];
+---
+
+<BaseLayout
+  title="我的收藏 · Prism AI 棱镜"
+  description="你在本机收藏的提示词与教程，集中管理，随时回到有用的内容。"
+>
+  <section class="page">
+    <header class="page-head reveal">
+      <h1>我的收藏</h1>
+      <p>
+        已收藏 <strong id="bookmark-count">0</strong> 条内容 · 数据仅保存在当前浏览器，点击卡片可查看原文。
+      </p>
+    </header>
+
+    <div id="bookmark-grid" class="bm-grid" hidden></div>
+
+    <div id="bookmark-empty" class="bm-empty glass-panel" hidden>
+      <div class="empty-icon" aria-hidden="true">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+        </svg>
+      </div>
+      <h2>还没有收藏任何内容</h2>
+      <p>在提示词或教程卡片上点击「收藏」，有用的内容就会出现在这里，方便以后快速找回。</p>
+      <div class="empty-actions">
+        <a class="btn btn-primary" href={base + 'prompts'}>去提示词库看看</a>
+        <a class="btn btn-ghost" href={base + 'tutorials'}>浏览教程中心</a>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="bookmark-data" set:html={JSON.stringify(entries)} />
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .page-head p {
+    color: var(--text-muted);
+    margin: 0 0 2.2rem;
+  }
+
+  .page-head p strong {
+    color: var(--color-ice-500);
+    font-family: var(--font-display);
+    font-size: 1.05em;
+  }
+
+  .bm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+  }
+
+  .bm-card {
+    padding: 1.3rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .bm-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .bm-card-head time {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+
+  .type-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+  }
+
+  .is-prompt {
+    color: var(--color-ice-500);
+    background: rgba(56, 189, 248, 0.18);
+  }
+
+  .is-tutorial {
+    color: var(--color-ice-400);
+    background: rgba(14, 165, 233, 0.22);
+  }
+
+  .bm-title {
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    line-height: 1.4;
+  }
+
+  .bm-title:hover {
+    color: var(--color-ice-500);
+  }
+
+  .bm-desc {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .bm-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .bm-tags .tag-chip {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    color: var(--text-muted);
+    background: rgba(125, 180, 255, 0.1);
+    border: 1px solid var(--border-soft);
+  }
+
+  .bm-foot {
+    margin-top: auto;
+    padding-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .bm-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-body);
+    background: var(--surface-solid);
+    border: 1px solid var(--border-mid);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .bm-remove:hover {
+    transform: translateY(-1px);
+    color: #fb7185;
+    background: rgba(244, 63, 94, 0.12);
+  }
+
+  /* 空状态 */
+  .bm-empty {
+    text-align: center;
+    padding: 3.5rem 2rem;
+  }
+
+  .empty-icon {
+    display: inline-flex;
+    color: var(--color-ice-500);
+    margin-bottom: 1rem;
+  }
+
+  .bm-empty h2 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    margin: 0 0 0.6rem;
+  }
+
+  .bm-empty p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    max-width: 34rem;
+    margin: 0 auto 1.8rem;
+    line-height: 1.7;
+  }
+
+  .empty-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 760px) {
+    .bm-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import { getBookmarks, toggleBookmark } from '../scripts/store';
+  import type { Kind } from '../scripts/store';
+
+  type ClientEntry = {
+    id: string;
+    kind: Kind;
+    type: string;
+    title: string;
+    description: string;
+    category: string;
+    tags: string[];
+    href: string;
+    dateLabel: string;
+  };
+
+  const dataEl = document.getElementById('bookmark-data');
+  const grid = document.getElementById('bookmark-grid') as HTMLElement;
+  const empty = document.getElementById('bookmark-empty') as HTMLElement;
+  const countEl = document.getElementById('bookmark-count') as HTMLElement;
+
+  const allEntries = JSON.parse(dataEl?.textContent ?? '[]') as ClientEntry[];
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function render(): void {
+    const promptIds = new Set(getBookmarks('prompt'));
+    const tutorialIds = new Set(getBookmarks('tutorial'));
+
+    const saved = allEntries.filter((e) =>
+      e.kind === 'prompt' ? promptIds.has(e.id) : tutorialIds.has(e.id),
+    );
+
+    countEl.textContent = String(saved.length);
+
+    if (!saved.length) {
+      empty.hidden = false;
+      grid.hidden = true;
+      grid.innerHTML = '';
+      return;
+    }
+
+    empty.hidden = true;
+    grid.hidden = false;
+
+    grid.innerHTML = saved
+      .map((e) => {
+        const badgeClass = e.kind === 'prompt' ? 'is-prompt' : 'is-tutorial';
+        const tags = e.tags
+          .map((t) => `<span class="tag-chip">#${escapeHtml(t)}</span>`)
+          .join('');
+        return `
+          <article class="bm-card glass-card">
+            <div class="bm-card-head">
+              <span class="type-badge ${badgeClass}">${e.type}</span>
+              <time datetime="${e.dateLabel}">${e.dateLabel}</time>
+            </div>
+            <a class="bm-title" href="${e.href}">${escapeHtml(e.title)}</a>
+            <p class="bm-desc">${escapeHtml(e.description)}</p>
+            <div class="bm-tags">${tags}</div>
+            <div class="bm-foot">
+              <span class="badge">${escapeHtml(e.category)}</span>
+              <button class="bm-remove" type="button" data-kind="${e.kind}" data-id="${escapeHtml(e.id)}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                取消收藏
+              </button>
+            </div>
+          </article>`;
+      })
+      .join('');
+
+    grid.querySelectorAll<HTMLButtonElement>('.bm-remove').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.kind as Kind;
+        const id = btn.dataset.id as string;
+        toggleBookmark(kind, id);
+      });
+    });
+  }
+
+  window.addEventListener('prism:store-change', render);
+  render();
+</script>

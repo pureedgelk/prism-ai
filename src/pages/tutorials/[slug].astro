@@ -191,9 +191,9 @@ function fmtDate(d: Date): string {
     border-radius: 999px;
   }
 
-  .diff-入门 { color: #0369a1; background: rgba(56, 189, 248, 0.16); }
-  .diff-进阶 { color: #b45309; background: rgba(251, 191, 36, 0.18); }
-  .diff-实战 { color: #be123c; background: rgba(244, 63, 94, 0.15); }
+  .diff-入门 { color: var(--color-ice-400); background: rgba(56, 189, 248, 0.16); }
+  .diff-进阶 { color: #fbbf24; background: rgba(251, 191, 36, 0.18); }
+  .diff-实战 { color: #fb7185; background: rgba(244, 63, 94, 0.15); }
 
   .article-head h1 {
     font-family: var(--font-display);
@@ -341,7 +341,7 @@ function fmtDate(d: Date): string {
     background: rgba(56, 189, 248, 0.14);
     padding: 0.15rem 0.4rem;
     border-radius: 6px;
-    color: #0369a1;
+    color: var(--color-ice-500);
   }
 
   .article-content pre {
@@ -414,10 +414,10 @@ function fmtDate(d: Date): string {
     width: 46px;
     height: 46px;
     border-radius: 50%;
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--border-mid);
+    background: var(--surface-strong);
     backdrop-filter: blur(10px);
-    color: var(--color-ice-700);
+    color: var(--color-ice-500);
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
     z-index: 45;

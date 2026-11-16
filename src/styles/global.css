@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/noto-sans-sc";
 
 /* ============ 设计 Token ============ */
 @theme {
@@ -17,10 +18,62 @@
   --color-ink-500: #5b7894;
   --color-ink-400: #7d96ad;
 
-  --font-display: "Space Grotesk Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --font-display: "Space Grotesk Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-sans: "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 
   --radius-glass: 1.25rem;
+}
+
+/* ============ 主题：语义变量（浅色为默认，.dark 覆盖） ============ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --body-bg:
+    radial-gradient(900px 500px at 12% -8%, rgba(125, 211, 252, 0.35), transparent 60%),
+    radial-gradient(800px 480px at 92% 4%, rgba(56, 189, 248, 0.22), transparent 60%),
+    radial-gradient(700px 600px at 50% 110%, rgba(14, 165, 233, 0.18), transparent 65%),
+    linear-gradient(180deg, #f4f8ff 0%, #eaf2fc 100%);
+  --surface: rgba(255, 255, 255, 0.62);
+  --surface-strong: rgba(255, 255, 255, 0.72);
+  --surface-solid: rgba(255, 255, 255, 0.6);
+  --border-glass: rgba(255, 255, 255, 0.85);
+  --border-soft: rgba(56, 189, 248, 0.18);
+  --border-mid: rgba(56, 189, 248, 0.3);
+  --text-strong: #0f2540;
+  --text-body: #33506e;
+  --text-muted: #5b7894;
+  --text-faint: #7d96ad;
+  --shadow-soft: rgba(14, 165, 233, 0.12);
+  --shadow-hover: rgba(14, 165, 233, 0.2);
+  --header-bg: rgba(244, 248, 255, 0.72);
+  --selection: rgba(56, 189, 248, 0.28);
+}
+
+.dark {
+  --body-bg:
+    radial-gradient(900px 500px at 12% -8%, rgba(56, 130, 246, 0.28), transparent 60%),
+    radial-gradient(800px 480px at 92% 4%, rgba(14, 116, 224, 0.24), transparent 60%),
+    radial-gradient(700px 600px at 50% 110%, rgba(10, 70, 160, 0.32), transparent 65%),
+    linear-gradient(180deg, #0b1630 0%, #070e1e 100%);
+  --surface: rgba(20, 33, 58, 0.55);
+  --surface-strong: rgba(16, 28, 50, 0.72);
+  --surface-solid: rgba(30, 46, 76, 0.6);
+  --border-glass: rgba(125, 180, 255, 0.18);
+  --border-soft: rgba(96, 165, 250, 0.2);
+  --border-mid: rgba(96, 165, 250, 0.32);
+  --text-strong: #e9f1ff;
+  --text-body: #b9cbe6;
+  --text-muted: #869dc0;
+  --text-faint: #6b82a6;
+  --shadow-soft: rgba(0, 0, 0, 0.45);
+  --shadow-hover: rgba(0, 0, 0, 0.55);
+  --header-bg: rgba(8, 16, 34, 0.72);
+  --selection: rgba(56, 130, 246, 0.38);
+  /* 反转 ink 灰阶，让各页面 scoped 文字自动适配深色 */
+  --color-ink-900: #e9f1ff;
+  --color-ink-700: #b9cbe6;
+  --color-ink-500: #869dc0;
+  --color-ink-400: #6b82a6;
 }
 
 /* ============ 基础 ============ */
@@ -30,20 +83,16 @@ html {
 
 body {
   font-family: var(--font-sans);
-  color: var(--color-ink-900);
-  background:
-    radial-gradient(900px 500px at 12% -8%, rgba(125, 211, 252, 0.35), transparent 60%),
-    radial-gradient(800px 480px at 92% 4%, rgba(56, 189, 248, 0.22), transparent 60%),
-    radial-gradient(700px 600px at 50% 110%, rgba(14, 165, 233, 0.18), transparent 65%),
-    linear-gradient(180deg, #f4f8ff 0%, #eaf2fc 100%);
+  color: var(--text-strong);
+  background: var(--body-bg);
   background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: rgba(56, 189, 248, 0.28);
-  color: var(--color-ink-900);
+  background: var(--selection);
+  color: var(--text-strong);
 }
 
 a {
@@ -60,14 +109,14 @@ a {
 /* ============ 玻璃组件 ============ */
 .glass-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.62);
+  background: var(--surface);
   backdrop-filter: blur(18px) saturate(1.4);
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-glass);
   box-shadow:
-    0 10px 36px rgba(14, 165, 233, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+    0 10px 36px var(--shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 0 0 1px var(--border-soft);
   border-radius: var(--radius-glass);
   transition: transform 0.35s ease, box-shadow 0.35s ease;
 }
@@ -75,17 +124,17 @@ a {
 .glass-card--hover:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 18px 48px rgba(14, 165, 233, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 0 0 1px rgba(56, 189, 248, 0.25);
+    0 18px 48px var(--shadow-hover),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 0 0 1px var(--border-mid);
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--surface-strong);
   backdrop-filter: blur(22px) saturate(1.5);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 40px rgba(14, 165, 233, 0.16);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 12px 40px var(--shadow-soft);
   border-radius: var(--radius-glass);
 }
 
@@ -116,15 +165,15 @@ a {
 }
 
 .btn-ghost {
-  color: var(--color-ice-700);
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(56, 189, 248, 0.35);
+  color: var(--text-body);
+  background: var(--surface-solid);
+  border-color: var(--border-mid);
   backdrop-filter: blur(10px);
 }
 
 .btn-ghost:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--surface-strong);
 }
 
 /* ============ 徽标 ============ */
@@ -135,9 +184,9 @@ a {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(56, 189, 248, 0.14);
-  color: var(--color-ice-700);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.16);
+  color: var(--color-ice-500);
+  border: 1px solid var(--border-soft);
 }
 
 /* ============ 流光边框 ============ */
@@ -211,22 +260,22 @@ a {
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-ink-700);
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--text-body);
+  background: var(--surface-solid);
+  border: 1px solid var(--border-mid);
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ia-btn:hover {
   transform: translateY(-1px);
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(56, 189, 248, 0.18);
 }
 
 .ia-btn .ia-icon,
 .ia-read .ia-icon {
   display: inline-flex;
-  color: var(--color-ink-400);
+  color: var(--text-faint);
   transition: color 0.2s ease;
 }
 
@@ -243,12 +292,12 @@ a {
 
 .ia-read {
   cursor: default;
-  color: var(--color-ink-500);
-  background: rgba(234, 242, 252, 0.7);
+  color: var(--text-muted);
+  background: var(--surface);
 }
 
 .ia-read .ia-icon {
-  color: var(--color-ice-600);
+  color: var(--color-ice-500);
 }
 
 /* ============ 降级 ============ */
