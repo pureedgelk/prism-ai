@@ -8,5 +8,8 @@ export default defineConfig({
   trailingSlash: 'ignore',
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      sourcemap: true,
+    },
   },
 });

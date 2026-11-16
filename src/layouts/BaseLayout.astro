@@ -3,6 +3,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Search from '../components/Search.astro';
 import ParticleBackground from '../components/ParticleBackground.astro';
+import groteskUrl from '@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2?url';
 import '../styles/global.css';
 
 interface Props {
@@ -28,6 +29,7 @@ const base = import.meta.env.BASE_URL.endsWith('/')
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href={base + 'favicon.svg'} />
+    <link rel="preload" as="font" type="font/woff2" href={groteskUrl} crossorigin />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

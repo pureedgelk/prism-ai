@@ -98,7 +98,8 @@
     }
   }
 
-  if (!supportsWebGL()) {
+  if (isMobile || !supportsWebGL()) {
+    // 移动端不初始化 WebGL，直接使用纯 CSS 回退，避免 three.js 拖慢首屏
     root.classList.add('is-fallback');
   } else {
     await init(reducedMotion);

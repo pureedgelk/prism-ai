@@ -27,7 +27,12 @@ interface Props {
 }
 
 const { entry, prev, next } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+
+// 服务端生成目录（Markdown 标题，depth 2/3），避免客户端注入导致布局偏移
+const tocHeadings = headings
+  .filter((h) => h.depth === 2 || h.depth === 3)
+  .map((h) => ({ slug: h.slug, text: h.text, depth: h.depth }));
 const base = import.meta.env.BASE_URL.endsWith('/')
   ? import.meta.env.BASE_URL
   : import.meta.env.BASE_URL + '/';
@@ -85,7 +90,17 @@ function fmtDate(d: Date): string {
       <aside class="toc-wrap" aria-label="文章目录">
         <div class="toc-inner glass-panel">
           <h2>目录</h2>
-          <nav id="toc"></nav>
+          <nav id="toc">
+            {
+              tocHeadings.map((h) => (
+                <a
+                  class:list={[{ 'level-3': h.depth === 3 }]}
+                  href={`#${h.slug}`}
+                  data-toc-link
+                >{h.text}</a>
+              ))
+            }
+          </nav>
         </div>
       </aside>
     </div>
@@ -437,24 +452,23 @@ function fmtDate(d: Date): string {
     progressBar.style.width = `${Math.min(100, ratio * 100)}%`;
   }
 
-  // 生成 TOC
+  // 目录已在服务端渲染，这里只绑定点击平滑滚动，并建立标题→链接映射供 scroll spy
   const content = document.getElementById('article-content') as HTMLElement;
   const toc = document.getElementById('toc') as HTMLElement;
   const headings = Array.from(content.querySelectorAll('h2, h3'));
+  const tocLinks = Array.from(toc.querySelectorAll<HTMLAnchorElement>('a'));
   const headingInfos: { el: Element; link: HTMLAnchorElement }[] = [];
 
   headings.forEach((h, i) => {
     if (!h.id) h.id = `section-${i}`;
-    const link = document.createElement('a');
-    link.href = `#${h.id}`;
-    link.textContent = h.textContent ?? '';
-    link.classList.add(h.tagName === 'H3' ? 'level-3' : 'level-2');
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    toc.appendChild(link);
-    headingInfos.push({ el: h, link });
+    const link = tocLinks.find((a) => a.getAttribute('href') === `#${h.id}`);
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      headingInfos.push({ el: h, link });
+    }
   });
 
   // scroll spy
