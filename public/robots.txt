@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pureedgelk.github.io/prism-ai/sitemap-index.xml

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Prism AI OG</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1200px; height: 630px; overflow: hidden; }
+      body {
+        font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      }
+      .frame {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        display: flex;
+        align-items: center;
+        padding: 0 80px;
+        background:
+          radial-gradient(1100px 600px at 82% -10%, rgba(56, 132, 255, 0.28), transparent 60%),
+          radial-gradient(900px 500px at 8% 110%, rgba(34, 211, 238, 0.20), transparent 60%),
+          linear-gradient(135deg, #f4f8ff 0%, #e3eeff 55%, #d6e6ff 100%);
+        overflow: hidden;
+      }
+      /* 细网格 */
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(37, 99, 235, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(37, 99, 235, 0.07) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: radial-gradient(80% 80% at 50% 40%, #000 40%, transparent 100%);
+      }
+      .glow { position: absolute; border-radius: 50%; filter: blur(70px); }
+      .g1 { width: 360px; height: 360px; right: 120px; top: 60px;
+        background: rgba(59, 130, 246, 0.45); }
+      .g2 { width: 260px; height: 260px; right: 360px; bottom: 40px;
+        background: rgba(34, 211, 238, 0.35); }
+
+      .content { position: relative; z-index: 3; max-width: 620px; }
+      .brand-en {
+        font-size: 26px; font-weight: 700; letter-spacing: 10px;
+        color: #2563eb; margin-bottom: 18px;
+      }
+      .brand-cn {
+        font-size: 76px; font-weight: 800; color: #0d2240;
+        line-height: 1.08; letter-spacing: 1px;
+      }
+      .tagline {
+        margin-top: 20px; font-size: 32px; font-weight: 500;
+        color: #2b4a7a; letter-spacing: 2px;
+      }
+      .chips { margin-top: 34px; display: flex; gap: 16px; }
+      .chips span {
+        font-size: 22px; font-weight: 600; color: #1d4ed8;
+        padding: 10px 22px; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+      }
+      .url {
+        margin-top: 40px; font-size: 24px; font-weight: 600;
+        color: #4b6a99; letter-spacing: 0.5px;
+      }
+
+      /* 水晶球 */
+      .orb {
+        position: absolute; right: 96px; top: 50%;
+        width: 340px; height: 340px; transform: translateY(-50%);
+        border-radius: 50%; z-index: 2;
+        background:
+          radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95) 0%, rgba(180,214,255,0.5) 18%, transparent 40%),
+          radial-gradient(circle at 70% 75%, rgba(34,211,238,0.55) 0%, transparent 45%),
+          radial-gradient(circle at 50% 50%, #6aa8ff 0%, #2f6fe0 55%, #1b3fa8 100%);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow:
+          0 30px 80px rgba(29, 78, 216, 0.45),
+          inset -20px -28px 60px rgba(10, 30, 90, 0.55),
+          inset 18px 22px 50px rgba(255, 255, 255, 0.35);
+      }
+      .orb-highlight {
+        position: absolute; left: 60px; top: 48px;
+        width: 110px; height: 70px; border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(255,255,255,0.9), transparent 70%);
+        filter: blur(4px);
+      }
+      .orb-ring {
+        position: absolute; border-radius: 50%;
+        border: 2px solid rgba(125, 190, 255, 0.55);
+      }
+      .r1 { inset: -26px; border-top-color: rgba(34,211,238,0.9);
+        border-bottom-color: transparent; transform: rotate(18deg); }
+      .r2 { inset: -52px; border-left-color: rgba(34,211,238,0.7);
+        border-right-color: transparent; opacity: 0.7; transform: rotate(-12deg); }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="grid"></div>
+      <div class="glow g1"></div>
+      <div class="glow g2"></div>
+      <div class="orb">
+        <div class="orb-ring r1"></div>
+        <div class="orb-ring r2"></div>
+        <div class="orb-highlight"></div>
+      </div>
+      <div class="content">
+        <div class="brand-en">PRISM AI</div>
+        <h1 class="brand-cn">Prism AI 棱镜</h1>
+        <p class="tagline">折射 AI 的每一束光</p>
+        <div class="chips"><span>开源</span><span>每日更新</span><span>AI 学习站</span></div>
+        <div class="url">pureedgelk.github.io/prism-ai</div>
+      </div>
+    </div>
+  </body>
+</html>
