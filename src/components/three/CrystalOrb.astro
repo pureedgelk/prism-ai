@@ -5,6 +5,8 @@
   <div class="orb-fallback" id="orb-fallback" aria-hidden="true">
     <span class="fallback-ring r1"></span>
     <span class="fallback-ring r2"></span>
+    <span class="fallback-ring r3"></span>
+    <span class="fallback-ring r4"></span>
     <span class="fallback-core"></span>
   </div>
   <canvas id="orb-canvas" aria-hidden="true"></canvas>
@@ -43,42 +45,104 @@
     display: none;
   }
 
+  /* 多棱晶体核心（clip-path 多边形 + 半透明紫白） */
   .fallback-core {
-    width: 52%;
-    height: 52%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95), rgba(125, 211, 252, 0.75) 45%, rgba(14, 165, 233, 0.55) 100%);
-    box-shadow: 0 0 60px rgba(37, 99, 235, 0.55), inset 0 0 30px rgba(255, 255, 255, 0.8);
+    position: relative;
+    width: 50%;
+    height: 50%;
+    clip-path: polygon(
+      50% 0%,
+      80% 12%,
+      100% 38%,
+      94% 72%,
+      70% 100%,
+      30% 100%,
+      6% 72%,
+      0% 38%,
+      20% 12%
+    );
+    background: linear-gradient(
+      150deg,
+      rgba(237, 233, 254, 0.55) 0%,
+      rgba(196, 181, 253, 0.4) 22%,
+      rgba(124, 58, 237, 0.32) 55%,
+      rgba(76, 29, 149, 0.4) 100%
+    );
+    box-shadow: 0 0 60px rgba(124, 58, 237, 0.5),
+      inset 0 0 30px rgba(255, 255, 255, 0.3);
     animation: float-y 5s ease-in-out infinite;
+  }
+
+  /* 顶部棱面高光 */
+  .fallback-core::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(50% 0%, 100% 38%, 50% 50%, 0% 38%);
+    background: rgba(255, 255, 255, 0.26);
+  }
+
+  /* 底部棱面阴影 */
+  .fallback-core::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(
+      50% 50%,
+      94% 72%,
+      70% 100%,
+      30% 100%,
+      6% 72%
+    );
+    background: rgba(76, 29, 149, 0.3);
   }
 
   .fallback-ring {
     position: absolute;
     border-radius: 50%;
-    border: 1px solid rgba(49, 46, 129, 0.5);
+    border: 1px solid rgba(124, 58, 237, 0.4);
   }
 
   .r1 {
-    width: 72%;
-    height: 72%;
+    width: 66%;
+    height: 66%;
     animation: spin-slow 14s linear infinite;
     border-style: dashed;
   }
 
   .r2 {
-    width: 88%;
-    height: 88%;
-    animation: spin-slow 22s linear infinite reverse;
+    width: 80%;
+    height: 80%;
+    animation: spin-slow 18s linear infinite reverse;
+  }
+
+  .r3 {
+    width: 92%;
+    height: 92%;
+    animation: spin-slow 24s linear infinite;
+    border-style: dashed;
+  }
+
+  .r4 {
+    width: 100%;
+    height: 100%;
+    animation: spin-slow 30s linear infinite reverse;
   }
 
   @keyframes spin-slow {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .fallback-core,
     .r1,
-    .r2 { animation: none; }
+    .r2,
+    .r3,
+    .r4 {
+      animation: none;
+    }
   }
 </style>
 
@@ -92,7 +156,10 @@
   function supportsWebGL(): boolean {
     try {
       const c = document.createElement('canvas');
-      return !!(window.WebGL2RenderingContext && c.getContext('webgl2')) || !!c.getContext('webgl');
+      return (
+        !!(window.WebGL2RenderingContext && c.getContext('webgl2')) ||
+        !!c.getContext('webgl')
+      );
     } catch {
       return false;
     }
@@ -102,7 +169,7 @@
     // 移动端或不支持 WebGL：直接使用纯 CSS 回退，不初始化 three.js
     root.classList.add('is-fallback');
   } else {
-    // 桌面端：首屏先显示 CSS 回退球，等浏览器空闲（首屏内容渲染后）再初始化 WebGL，
+    // 桌面端：首屏先显示 CSS 回退，等浏览器空闲（首屏内容渲染后）再初始化 WebGL，
     // 避免 three.js 重活阻塞首屏；timeout 保证最迟 2s 启动
     root.classList.add('is-fallback');
     const run = () => {
@@ -119,7 +186,9 @@
 
   async function init(lowMotion: boolean) {
     const THREE = await import('three');
-    const { RoomEnvironment } = await import('three/examples/jsm/environments/RoomEnvironment.js');
+    const { RoomEnvironment } = await import(
+      'three/examples/jsm/environments/RoomEnvironment.js'
+    );
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
@@ -139,29 +208,74 @@
     const group = new THREE.Group();
     scene.add(group);
 
-    // ===== 水晶球本体 =====
-    const orbGeo = new THREE.SphereGeometry(1.55, 48, 48);
-    const orbMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#dbeffe'),
-      metalness: 0,
-      roughness: 0.06,
-      transmission: 1,
-      ior: 1.45,
-      thickness: 1.4,
-      clearcoat: 1,
-      clearcoatRoughness: 0.08,
-      attenuationColor: new THREE.Color('#7dd3fc'),
-      attenuationDistance: 4,
-      envMapIntensity: 1.2,
-    });
-    const orb = new THREE.Mesh(orbGeo, orbMat);
-    group.add(orb);
+    // ===== 多棱面球（保持球状，棱面分明 + 轻微海浪起伏）=====
+    const ORB_R = 1.55;
+    const WAVE_AMP = 0.08; // 幅度小，保持整体球形
+    const orbGeo = new THREE.IcosahedronGeometry(ORB_R, 2);
+    const posAttr = orbGeo.attributes.position;
 
-    // ===== 深邃电蓝贴球光晕（Fresnel + 呼吸）=====
+    // 保存每个顶点的基准径向方向（PolyhedronGeometry 各面顶点独立，同方向位移可保持无缝）
+    const baseDirs = new Float32Array(posAttr.count * 3);
+    for (let i = 0; i < posAttr.count; i++) {
+      const x = posAttr.getX(i);
+      const y = posAttr.getY(i);
+      const z = posAttr.getZ(i);
+      const len = Math.sqrt(x * x + y * y + z * z) || 1;
+      baseDirs[i * 3] = x / len;
+      baseDirs[i * 3 + 1] = y / len;
+      baseDirs[i * 3 + 2] = z / len;
+    }
+
+    // 高透半透明紫面（flatShading 形成棱角分明的多棱面）
+    const faceMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#8b5cf6'),
+      emissive: new THREE.Color('#6d28d9'),
+      emissiveIntensity: 0.35,
+      metalness: 0.15,
+      roughness: 0.25,
+      transparent: true,
+      opacity: 0.25,
+      flatShading: true,
+      envMapIntensity: 1.3,
+      depthWrite: false,
+    });
+    const faceMesh = new THREE.Mesh(orbGeo, faceMat);
+    group.add(faceMesh);
+
+    // 发光棱线（共享同一几何体，wireframe 棱边网络，半透明亮紫加色发光）
+    const wireMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#c4b5fd'),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.55,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const wireMesh = new THREE.Mesh(orbGeo, wireMat);
+    group.add(wireMesh);
+
+    // 棱面轻微海浪起伏：波沿方位角绕核传播，整体仍近似球体
+    function updateOrbSurface(t: number) {
+      for (let i = 0; i < posAttr.count; i++) {
+        const bx = baseDirs[i * 3];
+        const by = baseDirs[i * 3 + 1];
+        const bz = baseDirs[i * 3 + 2];
+        const azimuth = Math.atan2(bz, bx);
+        const polar = Math.acos(THREE.MathUtils.clamp(by, -1, 1));
+        const wave =
+          Math.sin(azimuth * 2.0 + t * 1.15) +
+          Math.cos(polar * 1.5 + t * 0.7) * 0.4;
+        const r = ORB_R + wave * WAVE_AMP;
+        posAttr.setXYZ(i, bx * r, by * r, bz * r);
+      }
+      posAttr.needsUpdate = true;
+    }
+
+    // ===== 紫色外辉（Fresnel + 呼吸）=====
     const glowMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new THREE.Color('#2563eb') },
+        uColor: { value: new THREE.Color('#7c3aed') },
       },
       vertexShader: `
         varying vec3 vNormal;
@@ -191,12 +305,18 @@
       depthWrite: false,
       side: THREE.BackSide,
     });
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(1.92, 32, 32), glowMat);
+    const glow = new THREE.Mesh(
+      new THREE.SphereGeometry(1.95, 32, 32),
+      glowMat,
+    );
     group.add(glow);
 
-    // ===== 球内粒子（保留）=====
-    const innerCount = isMobile ? 260 : 800;
+    // ===== 内核粒子云（紫白发光，高透棱面下清晰可见）=====
+    const innerCount = 800;
     const innerPositions = new Float32Array(innerCount * 3);
+    const innerKinds = new Float32Array(innerCount);
+    const innerPhases = new Float32Array(innerCount);
+    const innerSizes = new Float32Array(innerCount);
     for (let i = 0; i < innerCount; i++) {
       const r = Math.cbrt(Math.random()) * 1.35;
       const theta = Math.random() * Math.PI * 2;
@@ -204,20 +324,65 @@
       innerPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       innerPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       innerPositions[i * 3 + 2] = r * Math.cos(phi);
+      innerKinds[i] = Math.random();
+      innerPhases[i] = Math.random() * Math.PI * 2;
+      innerSizes[i] = 1.8 + Math.random() * 2.6;
     }
     const innerGeo = new THREE.BufferGeometry();
     innerGeo.setAttribute('position', new THREE.BufferAttribute(innerPositions, 3));
-    const innerMat = new THREE.PointsMaterial({
-      color: new THREE.Color('#0ea5e9'),
-      size: 0.022,
+    innerGeo.setAttribute('aKind', new THREE.BufferAttribute(innerKinds, 1));
+    innerGeo.setAttribute('aPhase', new THREE.BufferAttribute(innerPhases, 1));
+    innerGeo.setAttribute('aSize', new THREE.BufferAttribute(innerSizes, 1));
+
+    const innerMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uPx: { value: renderer.getPixelRatio() },
+        uPurple: { value: new THREE.Color('#7c3aed') },
+        uLight: { value: new THREE.Color('#c4b5fd') },
+      },
+      vertexShader: `
+        attribute float aKind;
+        attribute float aPhase;
+        attribute float aSize;
+        uniform float uPx;
+        varying float vKind;
+        varying float vPhase;
+        void main() {
+          vKind = aKind;
+          vPhase = aPhase;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = aSize * uPx * (7.3 / -mv.z);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform vec3 uPurple;
+        uniform vec3 uLight;
+        varying float vKind;
+        varying float vPhase;
+        void main() {
+          vec2 d = gl_PointCoord - 0.5;
+          float dd = length(d);
+          if (dd > 0.5) discard;
+          float halo = smoothstep(0.5, 0.0, dd);
+          float core = smoothstep(0.16, 0.0, dd);
+          float twinkle = 0.4 + 0.6 * sin(uTime * 2.0 + vPhase);
+          vec3 base = mix(uPurple, uLight, smoothstep(0.35, 0.8, vKind));
+          float whiteAmt = smoothstep(0.82, 1.0, vKind);
+          vec3 col = mix(base, vec3(1.0), core * (0.6 + whiteAmt));
+          gl_FragColor = vec4(col, halo * twinkle);
+        }
+      `,
       transparent: true,
-      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
     const innerPoints = new THREE.Points(innerGeo, innerMat);
     group.add(innerPoints);
 
-    // ===== 3 条流动虚线环 =====
+    // ===== 流动虚线环 =====
     function makeDashLine(R: number) {
       const N = 220;
       const positions = new Float32Array(N * 3);
@@ -235,7 +400,7 @@
       const m = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uColor: { value: new THREE.Color('#312e81') },
+          uColor: { value: new THREE.Color('#5b21b6') },
         },
         vertexShader: `
           attribute float aAngle;
@@ -261,7 +426,7 @@
       return new THREE.LineLoop(g, m);
     }
 
-    // ===== 沿环分布的白紫粒子 =====
+    // ===== 沿环分布的紫白粒子 =====
     interface ParticleMeta {
       a: number;
       jR: number;
@@ -284,7 +449,7 @@
         const sp = 0.25 + Math.random() * 0.4;
         meta.push({ a, jR, jZ, sp, R });
 
-        kinds[i] = Math.random() < 0.4 ? 1 : 0;
+        kinds[i] = Math.random() < 0.45 ? 1 : 0;
         phases[i] = Math.random() * Math.PI * 2;
         sizes[i] = 2.8 + Math.random() * 3.2;
       }
@@ -300,7 +465,7 @@
           uTime: { value: 0 },
           uPx: { value: renderer.getPixelRatio() },
           uPurple: { value: new THREE.Color('#7c3aed') },
-          uLightPurple: { value: new THREE.Color('#a5b4fc') },
+          uLightPurple: { value: new THREE.Color('#c4b5fd') },
         },
         vertexShader: `
           attribute float aKind;
@@ -347,11 +512,13 @@
       return { points, geo: g, meta };
     }
 
-    const perRing = isMobile ? 250 : 500;
+    const perRing = 500;
+    // 4 条等间距环（3 → 4），各自倾角与转速
     const ringConfigs = [
-      { R: 2.0, rx: 0.5, ry: 0.3, rz: 0.15, spin: 0.0006 },
-      { R: 2.35, rx: -0.7, ry: 0.5, rz: -0.2, spin: -0.0008 },
-      { R: 2.7, rx: 0.9, ry: -0.4, rz: 0.3, spin: 0.0005 },
+      { R: 1.95, rx: 0.5, ry: 0.3, rz: 0.15, spin: 0.0006, phase: 0.0 },
+      { R: 2.25, rx: -0.7, ry: 0.5, rz: -0.2, spin: -0.0008, phase: 1.6 },
+      { R: 2.55, rx: 0.9, ry: -0.4, rz: 0.3, spin: 0.0005, phase: 3.1 },
+      { R: 2.85, rx: -0.4, ry: 0.8, rz: 0.5, spin: -0.0006, phase: 4.7 },
     ];
 
     interface RingBundle {
@@ -359,6 +526,7 @@
       dash: THREE.LineLoop;
       particles: ReturnType<typeof makeRingParticles>;
       spin: number;
+      phase: number;
     }
 
     const ringBundles: RingBundle[] = [];
@@ -371,16 +539,24 @@
       rg.add(dash);
       rg.add(particles.points);
       group.add(rg);
-      ringBundles.push({ group: rg, dash, particles, spin: cfg.spin });
+      ringBundles.push({
+        group: rg,
+        dash,
+        particles,
+        spin: cfg.spin,
+        phase: cfg.phase,
+      });
     });
 
-    function updateParticles(bundle: RingBundle, dt: number) {
+    // 环粒子沿环运动，并以同频率（1.15）径向波浪与棱面球联动
+    function updateParticles(bundle: RingBundle, dt: number, t: number) {
       const arr = bundle.particles.geo.attributes.position.array as Float32Array;
       const meta = bundle.particles.meta;
+      const waveR = Math.sin(t * 1.15 + bundle.phase) * 0.05;
       for (let i = 0; i < meta.length; i++) {
         const p = meta[i];
         p.a += p.sp * dt;
-        const rr = p.R + p.jR;
+        const rr = p.R + p.jR + waveR;
         arr[i * 3] = Math.cos(p.a) * rr;
         arr[i * 3 + 1] = Math.sin(p.a) * rr;
         arr[i * 3 + 2] = p.jZ;
@@ -435,17 +611,23 @@
       camera.position.y = target.y;
       camera.lookAt(0, 0, 0);
 
+      // 整体绕核缓慢旋转
       group.rotation.y += 0.0022;
+      // 棱面轻微海浪起伏
+      updateOrbSurface(t);
+      // 内核粒子缓慢旋转
       innerPoints.rotation.y = t * 0.12;
       innerPoints.rotation.x = t * 0.05;
 
       glowMat.uniforms.uTime.value = t;
+      innerMat.uniforms.uTime.value = t;
 
       ringBundles.forEach((bundle) => {
         bundle.group.rotation.z += bundle.spin;
         (bundle.dash.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-        (bundle.particles.points.material as THREE.ShaderMaterial).uniforms.uTime.value = t;
-        updateParticles(bundle, dt);
+        (bundle.particles.points.material as THREE.ShaderMaterial).uniforms.uTime.value =
+          t;
+        updateParticles(bundle, dt, t);
       });
 
       renderer.render(scene, camera);
@@ -468,7 +650,7 @@
       },
       { threshold: 0.05 },
     );
-    ringBundles.forEach((bundle) => updateParticles(bundle, 0));
+    ringBundles.forEach((bundle) => updateParticles(bundle, 0, 0));
 
     if (lowMotion) {
       // 低动效：下一绘制帧渲染一次静态画面即停止，随后切换到 WebGL 画面
