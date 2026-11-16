@@ -31,13 +31,12 @@ const ogImage = new URL(base + 'og.png', Astro.site ?? Astro.url);
       (function () {
         try {
           var stored = localStorage.getItem('prism:theme');
-          var dark = stored
-            ? stored === 'dark'
-            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          // 有存储时尊重用户选择；从未选择过则默认深色（不再跟随系统）
+          var dark = stored ? stored === 'dark' : true;
           if (dark) document.documentElement.classList.add('dark');
         } catch (e) {
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-            document.documentElement.classList.add('dark');
+          // 读取异常时也默认深色
+          document.documentElement.classList.add('dark');
         }
       })();
     </script>
